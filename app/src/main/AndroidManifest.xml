@@ -23,7 +23,9 @@
         <activity android:name=".SetupActivity" android:theme="@style/Theme.AppCompat.NoActionBar"/>
         <activity android:name=".RegisterActivity" />
         <activity android:name=".PostSingleActivity" android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
-        <activity android:name=".Profile_Activity"  />
+        <activity android:name=".Profile_Activity"
+            android:theme="@style/ProfileTheme"
+            />
         <activity android:name=".SplashActivity" android:theme="@style/Theme.AppCompat.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

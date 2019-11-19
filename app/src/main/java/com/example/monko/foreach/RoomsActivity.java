@@ -27,7 +27,7 @@ import java.util.Set;
 import java.util.StringTokenizer;
 
 public class RoomsActivity extends AppCompatActivity {
-    private Button push;
+/*    private Button push;
     private EditText roomName;
     private ListView listView;
     private ArrayAdapter<String> arrayAdapter;
@@ -98,5 +98,5 @@ public class RoomsActivity extends AppCompatActivity {
 
 
 
-    }
+    }*/
 }

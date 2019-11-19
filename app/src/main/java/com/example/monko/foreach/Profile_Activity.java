@@ -2,15 +2,13 @@ package com.example.monko.foreach;
 
 import android.content.Context;
 import android.content.Intent;
-import android.support.annotation.NonNull;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -45,7 +43,7 @@ public class Profile_Activity extends MainActivity {
     private Query mQueryCurrentUser;
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthStateListener;
-    private boolean mProcessLike=false;
+    private boolean mProcessLike = false;
     private int counter;
     private RecyclerView PostList;
 
@@ -54,6 +52,7 @@ public class Profile_Activity extends MainActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile_);
+
         mAuth = FirebaseAuth.getInstance();
 
         mAuthStateListener = new FirebaseAuth.AuthStateListener() {
@@ -62,7 +61,7 @@ public class Profile_Activity extends MainActivity {
 
                 if (firebaseAuth.getCurrentUser() == null) {
 
-                    Intent loginIntent = new Intent(Profile_Activity.this , LoginActivity.class);
+                    Intent loginIntent = new Intent(Profile_Activity.this, LoginActivity.class);
                     loginIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                     startActivity(loginIntent);
                 }
@@ -70,25 +69,25 @@ public class Profile_Activity extends MainActivity {
         };
 //dewa work******************************************************************************
 
-        Gosetup=(Button)findViewById(R.id.gosetup);
+        Gosetup = (Button) findViewById(R.id.gosetup);
 
-        mauthh=FirebaseAuth.getInstance();
-        String user_id=getIntent().getExtras().get("user_id").toString();
-        if (mAuth.getCurrentUser().getUid().equals(user_id)){
+        mauthh = FirebaseAuth.getInstance();
+        String user_id = getIntent().getExtras().get("user_id").toString();
+        if (mAuth.getCurrentUser().getUid().equals(user_id)) {
 
             Gosetup.setVisibility(View.VISIBLE);
 
         }
 
-        profileimage=(ImageView)findViewById(R.id.imageprofilepic);
-        groundimage=(ImageView)findViewById(R.id.imageground);
-        username=(TextView)findViewById(R.id.textNameprof);
+        profileimage = (ImageView) findViewById(R.id.imageprofilepic);
+        groundimage = (ImageView) findViewById(R.id.imageground);
+        username = (TextView) findViewById(R.id.textNameprof);
 
-        GoMain=(Button)findViewById(R.id.button4);
+//        GoMain=(Button)findViewById(R.id.button4);
 
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference();
 
-        mdatabseusers=ref.child("users").child(user_id).child("name");
+        mdatabseusers = ref.child("users").child(user_id).child("name");
         mdatabseusers.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -102,7 +101,7 @@ public class Profile_Activity extends MainActivity {
             }
         });
 
-        mdatabseusers=ref.child("users").child(user_id).child("image");
+        mdatabseusers = ref.child("users").child(user_id).child("image");
         mdatabseusers.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -127,7 +126,7 @@ public class Profile_Activity extends MainActivity {
 
             }
         });
-        mdatabseusers=ref.child("users").child(user_id).child("ground");
+        mdatabseusers = ref.child("users").child(user_id).child("ground");
         mdatabseusers.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -157,38 +156,36 @@ public class Profile_Activity extends MainActivity {
         });
 
 
-
         Gosetup.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(Profile_Activity.this,SetupActivity.class);
+                Intent intent = new Intent(Profile_Activity.this, SetupActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(intent);
             }
         });
 
-        GoMain.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(Profile_Activity.this,MainActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                startActivity(intent);
-            }
-        });
+//        GoMain.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                Intent intent = new Intent(Profile_Activity.this,MainActivity.class);
+//                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+//                startActivity(intent);
+//            }
+//        });
 
         //**************************************************************************************************
 
         mAuth = FirebaseAuth.getInstance();
 
 
-
         Database = FirebaseDatabase.getInstance().getReference().child("Post");
         mDatabaseUsers = FirebaseDatabase.getInstance().getReference().child("users");
-        mDatabaseLike=FirebaseDatabase.getInstance().getReference().child("Like");
+        mDatabaseLike = FirebaseDatabase.getInstance().getReference().child("Like");
         //  String currentUserId=mAuth.getCurrentUser().getUid();
 
-        mDatabaseCurrentUser=FirebaseDatabase.getInstance().getReference().child("Post");
-        mQueryCurrentUser=mDatabaseCurrentUser.orderByChild("uid").equalTo(user_id);
+        mDatabaseCurrentUser = FirebaseDatabase.getInstance().getReference().child("Post");
+        mQueryCurrentUser = mDatabaseCurrentUser.orderByChild("uid").equalTo(user_id);
 
 
         mDatabaseUsers.keepSynced(true);
@@ -201,13 +198,14 @@ public class Profile_Activity extends MainActivity {
 
 
     }
+
     @Override
     protected void onStart() {
         super.onStart();
 
         mAuth.addAuthStateListener(mAuthStateListener);
 
-        FirebaseRecyclerAdapter<Post , PostViewHolder> firebaseRecyclerAdapter = new FirebaseRecyclerAdapter<Post, PostViewHolder>(
+        FirebaseRecyclerAdapter<Post, PostViewHolder> firebaseRecyclerAdapter = new FirebaseRecyclerAdapter<Post, PostViewHolder>(
 
                 Post.class,
                 R.layout.post_row,
@@ -218,15 +216,15 @@ public class Profile_Activity extends MainActivity {
             @Override
             protected void populateViewHolder(final PostViewHolder viewHolder, Post model, final int position) {
 
-                final String post_key=getRef(position).getKey();
+                final String post_key = getRef(position).getKey();
                 Log.i("positomn", String.valueOf(position));
-                Log.i("post key",post_key);
+                Log.i("post key", post_key);
 
-                DatabaseReference likes=Database.child(post_key).child("likes");
+                DatabaseReference likes = Database.child(post_key).child("likes");
                 likes.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
-                        counter =  dataSnapshot.getValue(Integer.class);
+                        counter = dataSnapshot.getValue(Integer.class);
                         viewHolder.setCounter(String.valueOf(counter));
                     }
 
@@ -237,11 +235,10 @@ public class Profile_Activity extends MainActivity {
                 });
 
 
-
                 viewHolder.setDesc(model.getDesc());
-                viewHolder.setImage(getApplicationContext() , model.getImage());
+                viewHolder.setImage(getApplicationContext(), model.getImage());
                 viewHolder.setUsername(model.getUsername());
-                viewHolder.setUserImage(getApplicationContext(),post_key);
+                viewHolder.setUserImage(getApplicationContext(), post_key);
                 viewHolder.setLikeBtn(post_key);
 
                 viewHolder.view.setOnClickListener(new View.OnClickListener() {
@@ -249,8 +246,8 @@ public class Profile_Activity extends MainActivity {
                     public void onClick(View v) {
                         //Toast.makeText(MainActivity.this,post_key,Toast.LENGTH_LONG).show();
 
-                        Intent singlePostIntent = new Intent(Profile_Activity.this , PostSingleActivity.class);
-                        singlePostIntent.putExtra("Post_Id",post_key);
+                        Intent singlePostIntent = new Intent(Profile_Activity.this, PostSingleActivity.class);
+                        singlePostIntent.putExtra("Post_Id", post_key);
                         startActivity(singlePostIntent);
                     }
                 });
@@ -260,11 +257,11 @@ public class Profile_Activity extends MainActivity {
 
                         mProcessLike = true;
 
-                        DatabaseReference likes=Database.child(post_key).child("likes");
+                        DatabaseReference likes = Database.child(post_key).child("likes");
                         likes.addListenerForSingleValueEvent(new ValueEventListener() {
                             @Override
                             public void onDataChange(DataSnapshot dataSnapshot) {
-                                counter =  dataSnapshot.getValue(Integer.class);
+                                counter = dataSnapshot.getValue(Integer.class);
                             }
 
                             @Override
@@ -321,30 +318,30 @@ public class Profile_Activity extends MainActivity {
 
         PostList.setAdapter(firebaseRecyclerAdapter);
     }
+
     public static class PostViewHolder extends RecyclerView.ViewHolder {
 
         View view;
-        ImageButton mlikeBtn;
+        ImageView mlikeBtn;
         DatabaseReference mDatabaseLike;
         DatabaseReference Database;
         FirebaseAuth mAuth;
-
 
 
         public PostViewHolder(View itemView) {
             super(itemView);
 
             view = itemView;
-            mlikeBtn=(ImageButton)view.findViewById(R.id.like_btn);
-            mDatabaseLike=FirebaseDatabase.getInstance().getReference().child("Like");
-            Database=FirebaseDatabase.getInstance().getReference().child("Post");
-            mAuth=FirebaseAuth.getInstance();
+            mlikeBtn = (ImageView) view.findViewById(R.id.like_btn);
+            mDatabaseLike = FirebaseDatabase.getInstance().getReference().child("Like");
+            Database = FirebaseDatabase.getInstance().getReference().child("Post");
+            mAuth = FirebaseAuth.getInstance();
             mDatabaseLike.keepSynced(true);
 
         }
 
 
-        public void setLikeBtn(final String post_key){
+        public void setLikeBtn(final String post_key) {
 
             mDatabaseLike.addValueEventListener(new ValueEventListener() {
                 @Override
@@ -354,21 +351,21 @@ public class Profile_Activity extends MainActivity {
 
                         if (dataSnapshot.child(post_key).hasChild(mAuth.getCurrentUser().getUid())) {
 
-                            mlikeBtn.setImageResource(R.drawable.ic_thumb_up_black_24dp);
+                            mlikeBtn.setImageResource(R.drawable.favorit);
 
                         } else {
 
-                            mlikeBtn.setImageResource(R.drawable.ic_thumb_down_black_24dp);
+                            mlikeBtn.setImageResource(R.drawable.unfav);
 
                         }
                     }
                 }
+
                 @Override
                 public void onCancelled(DatabaseError databaseError) {
 
                 }
             });
-
 
 
         }
@@ -392,7 +389,7 @@ public class Profile_Activity extends MainActivity {
 
         }
 
-        public void setImage(final Context context , final String image) {
+        public void setImage(final Context context, final String image) {
 
             final ImageView post_image = (ImageView) view.findViewById(R.id.post_image);
             //Picasso.with(context).load(image).into(post_image);
@@ -413,11 +410,12 @@ public class Profile_Activity extends MainActivity {
 
 
         }
-        public void setUserImage(final Context c,String post_key) {
+
+        public void setUserImage(final Context c, String post_key) {
 
             DatabaseReference ref = FirebaseDatabase.getInstance().getReference();
 
-            DatabaseReference s =ref.child("Post").child(post_key).child("userimage");
+            DatabaseReference s = ref.child("Post").child(post_key).child("userimage");
             s.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
@@ -439,6 +437,7 @@ public class Profile_Activity extends MainActivity {
                         }
                     });
                 }
+
                 @Override
                 public void onCancelled(DatabaseError databaseError) {
 
@@ -447,4 +446,12 @@ public class Profile_Activity extends MainActivity {
         }
     }
 
+    public void Go(View view) {
+
+        //  startActivity(new Intent(MainActivity.this , PostActivity.class));
+        Intent In = new Intent(Profile_Activity.this, PostActivity.class);
+        In.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(In);
+
+    }
 }

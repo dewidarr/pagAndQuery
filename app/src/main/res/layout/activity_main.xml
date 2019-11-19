@@ -15,50 +15,29 @@
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/post_list"
-        android:layout_width="360dp"
-        android:layout_height="500dp"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         tools:layout_editor_absoluteX="12dp"
         tools:layout_editor_absoluteY="5dp"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"></android.support.v7.widget.RecyclerView>
 
     </android.support.v4.widget.SwipeRefreshLayout>
-    <Button
-        android:id="@+id/button2"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:layout_alignParentTop="true"
-        android:layout_marginLeft="8dp"
-        android:layout_toStartOf="@+id/goBtn"
-        android:background="@drawable/logout"
-        android:onClick="logOut" />
 
-    <Button
-        android:id="@+id/profileGo"
-        android:layout_width="100dp"
-        android:layout_height="50dp"
-
-        android:layout_alignStart="@+id/goBtn"
-        android:layout_toEndOf="@+id/button2"
-        android:background="@drawable/profile_logo"
-        android:onClick="Goprof"
-        android:layout_alignParentTop="true" />
-
-    <Button
+    <android.support.design.widget.FloatingActionButton
         android:id="@+id/goBtn"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true"
-        android:background="@drawable/plus"
-        android:onClick="Go" />
-
-    <Button
-        android:id="@+id/Room"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Rooms"
-        android:onClick="Room"/>
+        android:src="@drawable/logo_transparent"
+        app:backgroundTint="#1976d2"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="22dp"
+        android:layout_marginRight="16dp"
+        android:layout_alignParentRight="true"
+        android:onClick="Go"
+        app:elevation="12dp"
+        app:fabSize="normal"
+        />
 
 
 </RelativeLayout>
