@@ -21,6 +21,7 @@
         tools:layout_editor_absoluteY="5dp"
         android:layout_alignParentTop="true"
         android:nestedScrollingEnabled="false"
+        android:animateLayoutChanges="false"
         android:layout_centerHorizontal="true"></android.support.v7.widget.RecyclerView>
 
     </android.support.v4.widget.SwipeRefreshLayout>

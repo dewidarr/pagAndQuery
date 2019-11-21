@@ -141,6 +141,8 @@ public class MainActivity extends AppCompatActivity {
         PostList = (RecyclerView) findViewById(R.id.post_list);
         PostList.setHasFixedSize(true);
         mLayoutManager = new LinearLayoutManager(MainActivity.this);
+        mLayoutManager.findFirstVisibleItemPosition();
+        mLayoutManager.setSmoothScrollbarEnabled(true);
         mLayoutManager.setReverseLayout(true);
         mLayoutManager.setStackFromEnd(true);
         PostList.setLayoutManager(mLayoutManager);
