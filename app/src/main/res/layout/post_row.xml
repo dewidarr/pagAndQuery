@@ -14,6 +14,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@color/postBackground"
         android:orientation="vertical">
         <LinearLayout
             android:layout_width="match_parent"
@@ -27,8 +28,7 @@
                 android:scaleType="centerCrop"
                 android:layout_marginTop="8dp"
                 android:layout_marginLeft="4dp"
-                android:src="@color/cardview_dark_background"
-                app:civ_border_width="2dp"
+                app:civ_border_width="1dp"
                 app:civ_border_color="#1976d2"/>
 
             <LinearLayout
@@ -43,8 +43,8 @@
                     android:paddingLeft="20dp"
                     android:layout_marginTop="8dp"
                     android:textSize="20sp"
-                    android:textColor="#000"
                     android:textStyle="bold"
+                    android:textColor="@color/colorTexts"
                     tools:ignore="HardcodedText,RtlHardcoded,RtlSymmetry" />
 
                 <TextView
@@ -52,6 +52,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="18dp"
+                    android:textColor="@color/colorTexts"
                     android:textSize="12sp" />
 
             </LinearLayout>
@@ -73,7 +74,7 @@
                 android:textStyle="bold"
                 android:layout_marginLeft="16dp"
                 android:layout_marginRight="16dp"
-                android:textColor="#363636"
+                android:textColor="@color/colorTexts"
                 android:textSize="14dp"
                 android:layout_marginBottom="8dp"
                 android:layout_marginTop="4dp"
@@ -123,6 +124,7 @@
                     android:layout_marginTop="4dp"
                     android:layout_marginLeft="4dp"
                     android:textStyle="bold"
+                    android:textColor="@color/colorTexts"
                     tools:ignore="HardcodedText,RtlHardcoded,RtlSymmetry" />
 
                 <ImageButton

@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#377B91"
+    android:background="@color/colorBackground"
     tools:context="com.example.monko.foreach.MainActivity">
 
     <android.support.v4.widget.SwipeRefreshLayout
@@ -20,6 +20,7 @@
         tools:layout_editor_absoluteX="12dp"
         tools:layout_editor_absoluteY="5dp"
         android:layout_alignParentTop="true"
+        android:nestedScrollingEnabled="false"
         android:layout_centerHorizontal="true"></android.support.v7.widget.RecyclerView>
 
     </android.support.v4.widget.SwipeRefreshLayout>

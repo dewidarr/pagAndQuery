@@ -2,10 +2,12 @@ package com.example.monko.foreach;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.app.AppCompatDelegate;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.Menu;
@@ -30,6 +32,7 @@ import com.squareup.picasso.Picasso;
 public class MainActivity extends AppCompatActivity {
 
     private RecyclerView PostList;
+    private LinearLayoutManager mLayoutManager;
 
     private DatabaseReference Database;
     private DatabaseReference mDatabaseUsers;
@@ -41,8 +44,9 @@ public class MainActivity extends AppCompatActivity {
     private FirebaseAuth.AuthStateListener mAuthStateListener;
     private boolean mProcessLike = false;
     private int counter;
-
-    SwipeRefreshLayout mSwipeRefreshLayout;
+    public final String mypreference = "mypref";
+    private SharedPreferences sharedpreferences;
+    private SwipeRefreshLayout mSwipeRefreshLayout;
 
 
     public void Goprof(View view) {
@@ -89,7 +93,14 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        sharedpreferences = getSharedPreferences(mypreference,
+                Context.MODE_PRIVATE);
 
+        if (sharedpreferences.contains("darkmood")) {
+            if (sharedpreferences.getBoolean("darkmood", false) == true) {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+            }
+        }
         mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.activity_main_swipe_refresh_layout);
         mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
@@ -129,7 +140,10 @@ public class MainActivity extends AppCompatActivity {
 
         PostList = (RecyclerView) findViewById(R.id.post_list);
         PostList.setHasFixedSize(true);
-        PostList.setLayoutManager(new LinearLayoutManager(this));
+        mLayoutManager = new LinearLayoutManager(MainActivity.this);
+        mLayoutManager.setReverseLayout(true);
+        mLayoutManager.setStackFromEnd(true);
+        PostList.setLayoutManager(mLayoutManager);
 
     }
 
@@ -147,8 +161,12 @@ public class MainActivity extends AppCompatActivity {
                 Database
 
         ) {
+
+
+
             @Override
             protected void populateViewHolder(final PostViewHolder viewHolder, Post model, final int position) {
+
 
                 final String post_key = getRef(position).getKey();
 
@@ -165,7 +183,6 @@ public class MainActivity extends AppCompatActivity {
 
                     }
                 });
-
 
                 viewHolder.setDesc(model.getDesc());
                 viewHolder.setDate(model.getDate());
@@ -459,10 +476,10 @@ public class MainActivity extends AppCompatActivity {
 
         if (item.getItemId() == R.id.profileBtn) {
 
-            Intent Intent = new Intent(MainActivity.this, Profile_Activity.class);
-            Intent.putExtra("user_id", mAuth.getCurrentUser().getUid());
-            Intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            startActivity(Intent);
+            Intent intent = new Intent(MainActivity.this, Profile_Activity.class);
+            intent.putExtra("user_id", mAuth.getCurrentUser().getUid());
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intent);
 
         } else if (item.getItemId() == R.id.logoutBtn) {
 
@@ -473,12 +490,36 @@ public class MainActivity extends AppCompatActivity {
 
         } else {
 
-            Intent In = new Intent(MainActivity.this, RoomsActivity.class);
-            In.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            startActivity(In);
+            sharedpreferences = getSharedPreferences(mypreference,
+                    Context.MODE_PRIVATE);
+
+            if (sharedpreferences.contains("darkmood")) {
+                if (sharedpreferences.getBoolean("darkmood", false) == true) {
+                    SharedPreferences.Editor editor = sharedpreferences.edit();
+                    editor.putBoolean("darkmood", false);
+                    editor.apply();
+                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+                    startActivity(new Intent(getApplicationContext(), MainActivity.class));
+                    finish();
+                } else {
+                    darkMood();
+                }
+            } else {
+                darkMood();
+            }
+
 
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void darkMood() {
+        SharedPreferences.Editor editor = sharedpreferences.edit();
+        editor.putBoolean("darkmood", true);
+        editor.apply();
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+        startActivity(new Intent(getApplicationContext(), MainActivity.class));
+        finish();
     }
 }

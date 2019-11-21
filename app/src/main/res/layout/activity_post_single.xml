@@ -1,75 +1,97 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/colorBackground"
     tools:context="com.example.monko.foreach.PostSingleActivity">
 
-    <ImageView
-        android:id="@+id/singlePostImage"
-        android:layout_width="match_parent"
-        android:layout_height="250dp"
-        android:adjustViewBounds="true"
-        android:scaleType="centerCrop"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentStart="true"
-        tools:ignore="ContentDescription" />
-
-    <TextView
-        android:id="@+id/singlePostDesc"
+    <android.support.design.widget.AppBarLayout
+        android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentStart="true"
-        android:layout_below="@+id/singlePostImage"
-        android:hint="Post Description Goes Here ....."
-        android:padding="10dp"
-        android:textSize="20sp"
+        >
+        <android.support.design.widget.CollapsingToolbarLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:contentScrim="?attr/colorPrimary"
+            app:layout_scrollFlags="scroll|exitUntilCollapsed"
+            >
+
+
+            <android.support.v7.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                app:layout_collapseMode="pin"
+                 >
+
+            </android.support.v7.widget.Toolbar>
+
+            <include layout="@layout/post_comments_view"
+
+                ></include>
+
+
+        </android.support.design.widget.CollapsingToolbarLayout>
+
+    </android.support.design.widget.AppBarLayout>
+
+
+
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/comment_list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="20dp"
+        app:layout_behavior = "@string/appbar_scrolling_view_behavior"
+        ></android.support.v7.widget.RecyclerView>
+
+
+
+
+    <EditText
+        android:id="@+id/writeComment"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginLeft="8dp"
+        android:paddingLeft="8dp"
+        android:background="@drawable/rounded_button_blue"
+        android:ems="10"
+        android:textColor="@color/colorBackground"
+        android:hint=" Please add your reply"
+        android:inputType="textPersonName"
+        android:textSize="15sp"
+        android:layout_gravity="bottom"
         tools:ignore="HardcodedText" />
 
     <Button
         android:id="@+id/singleRemoveBtn"
         android:layout_width="50dp"
         android:layout_height="50dp"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentTop="true"
-        android:layout_weight="0.54"
         android:background="@mipmap/delete"
+        app:layout_anchor="@id/appBarLayout"
+        app:layout_anchorGravity="right|end"
+        android:layout_marginRight="8dp"
         android:visibility="invisible"
         tools:ignore="ObsoleteLayoutParam" />
 
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/comment_list"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@+id/singlePostDesc"
-        android:layout_centerHorizontal="true"
-        tools:layout_editor_absoluteX="12dp"
-        tools:layout_editor_absoluteY="5dp"
-        android:layout_marginBottom="50dp"></android.support.v7.widget.RecyclerView>
-
-    <EditText
-        android:id="@+id/writeComment"
-        android:layout_width="280dp"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentStart="true"
-        android:layout_toStartOf="@+id/pushComment"
-        android:background="@drawable/rounded_edittext"
-        android:ems="10"
-        android:hint="Add Your Comment ...."
-        android:inputType="textPersonName"
-        android:textSize="15sp"
-        android:layout_alignTop="@+id/pushComment"
-        tools:ignore="HardcodedText" />
 
     <Button
         android:id="@+id/pushComment"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
-        android:text="Push"
-        android:layout_alignParentBottom="true"
+        app:layout_anchor="@id/writeComment"
+        app:layout_anchorGravity="end|bottom"
+        android:layout_marginLeft="12dp"
+        android:layout_marginRight="8dp"
+        android:textColor="@color/colorBackground"
+        android:background="@drawable/rounded_button_blue"
+        android:text="@string/comment"
         tools:ignore="HardcodedText,RtlHardcoded" />
 
-</RelativeLayout>
+
+</android.support.design.widget.CoordinatorLayout>

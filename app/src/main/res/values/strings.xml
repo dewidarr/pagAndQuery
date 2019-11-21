@@ -1,7 +1,8 @@
 <resources>
     <string name="app_name">Foreach</string>
     <string name="textview">TextView</string>
-    <string name="enter_name">Enter Name</string>
+    <string name="enter_name">Edit Name</string>
     <string name="set_date">Set date</string>
     <string name="post_decription_goes_here">Post Decription Goes Here</string>
+    <string name="comment">Reply</string>
 </resources>

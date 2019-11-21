@@ -1,50 +1,65 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.v7.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/tools"
+    xmlns:app2="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    xmlns:card_view="http://schemas.android.com/apk/res-auto"
-    xmlns:app="http://schemas.android.com/tools">
+    android:layout_height="wrap_content"
+    android:elevation="2dp"
+    android:layout_margin="4dp"
+    app2:cardCornerRadius="8dp"
+    android:background="@color/post_comment"
+    >
 
-    <RelativeLayout
+    <android.support.constraint.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="100dp">
+        android:layout_height="wrap_content"
+        android:background="@color/post_comment"
+        >
 
 
-        <de.hdodenhof.circleimageview.CircleImageView
-            android:id="@+id/comImage"
-            android:layout_width="80dp"
-            android:layout_height="50dp"
-            android:src="@mipmap/default_image"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentStart="true"
-            android:layout_above="@+id/comComment"
-            app:civ_border_width="2dp"
-            app:civ_border_color="#FF000000"
-            />
 
-        <TextView
-            android:id="@+id/comUsername"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
-            android:layout_toEndOf="@+id/comImage"
-            android:paddingBottom="15dp"
-            android:text="TextView"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            app:ignore="HardcodedText" />
+    <TextView
+        android:id="@+id/comUsername"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:textColor="@color/colorTexts"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app2:layout_constraintStart_toEndOf="@+id/comImage"
+        app2:layout_constraintTop_toTopOf="parent"
+        app:ignore="HardcodedText" />
 
-        <TextView
-            android:id="@+id/comComment"
-            android:layout_width="match_parent"
-            android:layout_height="30dp"
-            android:layout_alignParentBottom="true"
-            android:layout_alignParentStart="true"
-            android:layout_toEndOf="@+id/comUsername"
-            android:padding="5dp"
-            android:text="@string/textview"
-            android:textSize="15sp" />
-    </RelativeLayout>
+    <TextView
+        android:id="@+id/comComment"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="50dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginEnd="8dp"
+        android:textColor="@color/colorTexts"
+        android:textSize="16sp"
+        android:textStyle="normal"
+        app2:layout_constraintEnd_toEndOf="parent"
+        app2:layout_constraintStart_toEndOf="@+id/comImage"
+        app2:layout_constraintTop_toBottomOf="@+id/comImage" />
 
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:id="@+id/comImage"
+        android:layout_width="55dp"
+        android:layout_height="55dp"
+        android:layout_above="@+id/comComment"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:src="@mipmap/default_image"
+        app2:layout_constraintStart_toStartOf="parent"
+        app2:layout_constraintTop_toTopOf="parent"
+        app:civ_border_color="#1976d2"
+        app:civ_border_width="1dp" />
+
+    </android.support.constraint.ConstraintLayout>
 
 </android.support.v7.widget.CardView>
