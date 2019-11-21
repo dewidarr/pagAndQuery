@@ -3,8 +3,8 @@
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
-    <color name="colorBackground">#377B91</color>
-    <color name="postBackground">#ffffff</color>
+    <color name="colorBackground">#00a0a0</color>
+    <color name="postBackground">#f2f2f2</color>
     <color name="colorTexts">#000</color>
     <color name="post_comment">#37F0EDED</color>
 

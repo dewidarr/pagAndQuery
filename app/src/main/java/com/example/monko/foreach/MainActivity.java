@@ -142,7 +142,6 @@ public class MainActivity extends AppCompatActivity {
         PostList.setHasFixedSize(true);
         mLayoutManager = new LinearLayoutManager(MainActivity.this);
         mLayoutManager.findFirstVisibleItemPosition();
-        mLayoutManager.setSmoothScrollbarEnabled(true);
         mLayoutManager.setReverseLayout(true);
         mLayoutManager.setStackFromEnd(true);
         PostList.setLayoutManager(mLayoutManager);
@@ -163,7 +162,6 @@ public class MainActivity extends AppCompatActivity {
                 Database
 
         ) {
-
 
 
             @Override
