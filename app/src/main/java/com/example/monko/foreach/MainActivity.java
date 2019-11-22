@@ -4,20 +4,27 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.app.AppCompatDelegate;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
+import android.util.AttributeSet;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import com.firebase.ui.database.FirebaseRecyclerAdapter;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.paging.PagedList;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -25,8 +32,9 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
-import com.squareup.picasso.Callback;
-import com.squareup.picasso.NetworkPolicy;
+import com.shreyaspatil.firebase.recyclerpagination.DatabasePagingOptions;
+import com.shreyaspatil.firebase.recyclerpagination.FirebaseRecyclerPagingAdapter;
+import com.shreyaspatil.firebase.recyclerpagination.LoadingState;
 import com.squareup.picasso.Picasso;
 
 public class MainActivity extends AppCompatActivity {
@@ -47,6 +55,8 @@ public class MainActivity extends AppCompatActivity {
     public final String mypreference = "mypref";
     private SharedPreferences sharedpreferences;
     private SwipeRefreshLayout mSwipeRefreshLayout;
+    private FirebaseRecyclerPagingAdapter<Post, PostViewHolder> firebaseRecyclerAdapter;
+    private ProgressBar loadingMoreDataProgressBar;
 
 
     public void Goprof(View view) {
@@ -92,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        loadingMoreDataProgressBar = findViewById(R.id.loading_moreData_progress);
         sharedpreferences = getSharedPreferences(mypreference,
                 Context.MODE_PRIVATE);
 
@@ -101,7 +111,7 @@ public class MainActivity extends AppCompatActivity {
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
             }
         }
-        mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.activity_main_swipe_refresh_layout);
+        mSwipeRefreshLayout =  findViewById(R.id.activity_main_swipe_refresh_layout);
         mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
@@ -142,10 +152,11 @@ public class MainActivity extends AppCompatActivity {
         PostList.setHasFixedSize(true);
         mLayoutManager = new LinearLayoutManager(MainActivity.this);
         mLayoutManager.findFirstVisibleItemPosition();
-        mLayoutManager.setReverseLayout(true);
-        mLayoutManager.setStackFromEnd(true);
+//        mLayoutManager.setReverseLayout(true);
+//        mLayoutManager.setStackFromEnd(true);
         PostList.setLayoutManager(mLayoutManager);
 
+        loadPostsPagination();
     }
 
     @Override
@@ -153,151 +164,15 @@ public class MainActivity extends AppCompatActivity {
         super.onStart();
         checksUserExist();
         mAuth.addAuthStateListener(mAuthStateListener);
-
-        FirebaseRecyclerAdapter<Post, PostViewHolder> firebaseRecyclerAdapter = new FirebaseRecyclerAdapter<Post, PostViewHolder>(
-
-                Post.class,
-                R.layout.post_row,
-                PostViewHolder.class,
-                Database
-
-        ) {
-
-
-            @Override
-            protected void populateViewHolder(final PostViewHolder viewHolder, Post model, final int position) {
-
-
-                final String post_key = getRef(position).getKey();
-
-                DatabaseReference likes = Database.child(post_key).child("likes");
-                likes.addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        counter = dataSnapshot.getValue(Integer.class);
-                        viewHolder.setCounter(String.valueOf(counter));
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-
-                    }
-                });
-
-                viewHolder.setDesc(model.getDesc());
-                viewHolder.setDate(model.getDate());
-                viewHolder.setImage(getApplicationContext(), model.getImage());
-                viewHolder.setUsername(model.getUsername());
-                viewHolder.setUserImage(getApplicationContext(), post_key);
-                viewHolder.setLikeBtn(post_key);
-
-
-                viewHolder.view.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        //Toast.makeText(MainActivity.this,post_key,Toast.LENGTH_LONG).show();
-
-                        Intent singlePostIntent = new Intent(MainActivity.this, PostSingleActivity.class);
-                        singlePostIntent.putExtra("Post_Id", post_key);
-
-                        singlePostIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-
-                        startActivity(singlePostIntent);
-                    }
-                });
-
-                viewHolder.mUserImage.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        DatabaseReference likes = Database.child(post_key).child("uid");
-                        likes.addListenerForSingleValueEvent(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(DataSnapshot dataSnapshot) {
-                                String use = dataSnapshot.getValue(String.class);
-                                Intent Intent = new Intent(MainActivity.this, Profile_Activity.class);
-                                Intent.putExtra("user_id", use);
-                                Intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                                startActivity(Intent);
-
-                            }
-
-                            @Override
-                            public void onCancelled(DatabaseError databaseError) {
-
-                            }
-                        });
-
-
-                    }
-                });
-
-                viewHolder.mlikeBtn.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-
-                        mProcessLike = true;
-
-                        DatabaseReference likes = Database.child(post_key).child("likes");
-                        likes.addListenerForSingleValueEvent(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(DataSnapshot dataSnapshot) {
-                                counter = dataSnapshot.getValue(Integer.class);
-                            }
-
-                            @Override
-                            public void onCancelled(DatabaseError databaseError) {
-
-                            }
-                        });
-
-                        mDatabaseLike.addValueEventListener(new ValueEventListener() {
-
-                            @Override
-                            public void onDataChange(DataSnapshot dataSnapshot) {
-
-                                if (mProcessLike) {
-
-                                    if (dataSnapshot.child(post_key).hasChild(mAuth.getCurrentUser().getUid())) {
-
-                                        counter--;
-                                        //viewHolder.setLikesCount(counter);
-                                        Database.child(post_key).child("likes").setValue(counter);
-
-                                        mDatabaseLike.child(post_key).child(mAuth.getCurrentUser().getUid()).removeValue();
-
-                                        mProcessLike = false;
-
-                                    } else {
-
-                                        counter++;
-                                        //viewHolder.setLikesCount(counter);
-
-                                        Database.child(post_key).child("likes").setValue(counter);
-
-                                        mDatabaseLike.child(post_key).child(mAuth.getCurrentUser().getUid()).setValue("random value");
-
-                                        mProcessLike = false;
-                                    }
-
-                                }
-
-                            }
-
-                            @Override
-                            public void onCancelled(DatabaseError databaseError) {
-
-                            }
-
-                        });
-                    }
-                });
-
-
-            }
-        };
-
+        firebaseRecyclerAdapter.startListening();
         PostList.setAdapter(firebaseRecyclerAdapter);
         mSwipeRefreshLayout.setRefreshing(false);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        firebaseRecyclerAdapter.stopListening();
     }
 
     private void checksUserExist() {
@@ -410,21 +285,8 @@ public class MainActivity extends AppCompatActivity {
 
 
             final ImageView post_image = (ImageView) view.findViewById(R.id.post_image);
-            //Picasso.with(context).load(image).into(post_image);
+            Picasso.get().load(image).into(post_image);
 
-            Picasso.with(context).load(image).networkPolicy(NetworkPolicy.OFFLINE).into(post_image, new Callback() {
-                @Override
-                public void onSuccess() {
-
-                }
-
-                @Override
-                public void onError() {
-
-                    Picasso.with(context).load(image).into(post_image);
-
-                }
-            });
 
         }
 
@@ -440,19 +302,8 @@ public class MainActivity extends AppCompatActivity {
 
                     final ImageView post_userImage = (ImageView) view.findViewById(R.id.user_Image);
 
-                    Picasso.with(c).load(imagee).networkPolicy(NetworkPolicy.OFFLINE).into(post_userImage, new Callback() {
-                        @Override
-                        public void onSuccess() {
+                    Picasso.get().load(imagee).into(post_userImage);
 
-                        }
-
-                        @Override
-                        public void onError() {
-
-                            Picasso.with(c).load(imagee).into(post_userImage);
-
-                        }
-                    });
                 }
 
                 @Override
@@ -521,5 +372,178 @@ public class MainActivity extends AppCompatActivity {
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
         startActivity(new Intent(getApplicationContext(), MainActivity.class));
         finish();
+    }
+
+    private void loadPostsPagination(){
+        Query baseQuery = Database;
+        PagedList.Config config = new PagedList.Config.Builder()
+                .setEnablePlaceholders(false)
+                .setPrefetchDistance(2)
+                .setPageSize(3)
+                .build();
+
+
+        DatabasePagingOptions<Post> options = new DatabasePagingOptions.Builder<Post>()
+                .setLifecycleOwner(this)
+                .setQuery(baseQuery, config, Post.class)
+                .build();
+
+        firebaseRecyclerAdapter = new FirebaseRecyclerPagingAdapter<Post, PostViewHolder>(options) {
+            @Override
+            protected void onBindViewHolder(@NonNull final PostViewHolder viewHolder, int position, @NonNull Post model) {
+                final String post_key = getRef(position).getKey();
+
+                DatabaseReference likes = Database.child(post_key).child("likes");
+                likes.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        counter = dataSnapshot.getValue(Integer.class);
+                        viewHolder.setCounter(String.valueOf(counter));
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
+
+                viewHolder.setDesc(model.getDesc());
+                viewHolder.setDate(model.getDate());
+                viewHolder.setImage(getApplicationContext(), model.getImage());
+                viewHolder.setUsername(model.getUsername());
+                viewHolder.setUserImage(getApplicationContext(), post_key);
+                viewHolder.setLikeBtn(post_key);
+
+
+                viewHolder.view.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        //Toast.makeText(MainActivity.this,post_key,Toast.LENGTH_LONG).show();
+
+                        Intent singlePostIntent = new Intent(MainActivity.this, PostSingleActivity.class);
+                        singlePostIntent.putExtra("Post_Id", post_key);
+
+                        singlePostIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+                        startActivity(singlePostIntent);
+                    }
+                });
+
+                viewHolder.mUserImage.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        DatabaseReference likes = Database.child(post_key).child("uid");
+                        likes.addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                String use = dataSnapshot.getValue(String.class);
+                                Intent Intent = new Intent(MainActivity.this, Profile_Activity.class);
+                                Intent.putExtra("user_id", use);
+                                Intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                                startActivity(Intent);
+
+                            }
+
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {
+
+                            }
+                        });
+
+
+                    }
+                });
+
+                viewHolder.mlikeBtn.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        mProcessLike = true;
+
+                        DatabaseReference likes = Database.child(post_key).child("likes");
+                        likes.addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                counter = dataSnapshot.getValue(Integer.class);
+                            }
+
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {
+
+                            }
+                        });
+
+                        mDatabaseLike.addValueEventListener(new ValueEventListener() {
+
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
+
+                                if (mProcessLike) {
+
+                                    if (dataSnapshot.child(post_key).hasChild(mAuth.getCurrentUser().getUid())) {
+
+                                        counter--;
+                                        //viewHolder.setLikesCount(counter);
+                                        Database.child(post_key).child("likes").setValue(counter);
+
+                                        mDatabaseLike.child(post_key).child(mAuth.getCurrentUser().getUid()).removeValue();
+
+                                        mProcessLike = false;
+
+                                    } else {
+
+                                        counter++;
+                                        //viewHolder.setLikesCount(counter);
+
+                                        Database.child(post_key).child("likes").setValue(counter);
+
+                                        mDatabaseLike.child(post_key).child(mAuth.getCurrentUser().getUid()).setValue("random value");
+
+                                        mProcessLike = false;
+                                    }
+                                   notifyDataSetChanged();
+                                }
+
+                            }
+
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {
+
+                            }
+
+                        });
+                    }
+                });
+
+            }
+
+           /* @Nullable
+            @Override
+            protected DataSnapshot getItem(int position) {
+                return super.getItem(getItemCount() - 1 - position);
+            }*/
+
+            @Override
+            protected void onLoadingStateChanged(@NonNull LoadingState state) {
+
+                switch (state){
+                    case LOADING_MORE:
+                        loadingMoreDataProgressBar.setVisibility(View.VISIBLE);
+                    case LOADED:
+                        Toast.makeText(MainActivity.this, "loaded", Toast.LENGTH_SHORT).show();
+//                        loadingMoreDataProgressBar.setVisibility(View.INVISIBLE);
+
+                }
+
+            }
+
+            @NonNull
+            @Override
+            public PostViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+                View view = LayoutInflater.from(parent.getContext())
+                        .inflate(R.layout.post_row, parent, false);
+                return new PostViewHolder(view);
+            }
+        };
     }
 }

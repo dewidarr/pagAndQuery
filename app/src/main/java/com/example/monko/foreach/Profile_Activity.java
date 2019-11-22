@@ -3,16 +3,21 @@ package com.example.monko.foreach;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+import androidx.paging.PagedList;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
+import com.firebase.ui.database.FirebaseRecyclerOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -20,8 +25,9 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
-import com.squareup.picasso.Callback;
-import com.squareup.picasso.NetworkPolicy;
+import com.shreyaspatil.firebase.recyclerpagination.DatabasePagingOptions;
+import com.shreyaspatil.firebase.recyclerpagination.FirebaseRecyclerPagingAdapter;
+import com.shreyaspatil.firebase.recyclerpagination.LoadingState;
 import com.squareup.picasso.Picasso;
 
 
@@ -47,6 +53,7 @@ public class Profile_Activity extends MainActivity {
     private int counter;
     private RecyclerView PostList;
 
+    private FirebaseRecyclerAdapter<Post, PostViewHolder> firebaseRecyclerAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -106,19 +113,7 @@ public class Profile_Activity extends MainActivity {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 final String imagee = dataSnapshot.getValue(String.class);
-                Picasso.with(getApplicationContext()).load(imagee).networkPolicy(NetworkPolicy.OFFLINE).into(profileimage, new Callback() {
-                    @Override
-                    public void onSuccess() {
-
-                    }
-
-                    @Override
-                    public void onError() {
-
-                        Picasso.with(getApplicationContext()).load(imagee).into(profileimage);
-
-                    }
-                });
+                Picasso.get().load(imagee).into(profileimage);
             }
 
             @Override
@@ -131,21 +126,7 @@ public class Profile_Activity extends MainActivity {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 final String ground = dataSnapshot.getValue(String.class);
-
-                Picasso.with(getApplicationContext()).load(ground).networkPolicy(NetworkPolicy.OFFLINE).into(groundimage, new Callback() {
-                    @Override
-                    public void onSuccess() {
-
-                    }
-
-                    @Override
-                    public void onError() {
-
-                        Picasso.with(getApplicationContext()).load(ground).into(groundimage);
-
-                    }
-                });
-
+                Picasso.get().load(ground).into(groundimage);
 
             }
 
@@ -196,7 +177,7 @@ public class Profile_Activity extends MainActivity {
         PostList.setHasFixedSize(true);
         PostList.setLayoutManager(new LinearLayoutManager(this));
 
-
+        loadProfilePosts();
     }
 
     @Override
@@ -204,18 +185,146 @@ public class Profile_Activity extends MainActivity {
         super.onStart();
 
         mAuth.addAuthStateListener(mAuthStateListener);
+        firebaseRecyclerAdapter.startListening();
+        PostList.setAdapter(firebaseRecyclerAdapter);
+    }
 
-        FirebaseRecyclerAdapter<Post, PostViewHolder> firebaseRecyclerAdapter = new FirebaseRecyclerAdapter<Post, PostViewHolder>(
+    @Override
+    protected void onStop() {
+        super.onStop();
+        firebaseRecyclerAdapter.stopListening();
+    }
 
-                Post.class,
-                R.layout.post_row,
-                PostViewHolder.class,
-                mQueryCurrentUser
+    public static class PostViewHolder extends RecyclerView.ViewHolder {
 
-        ) {
+        View view;
+        ImageView mlikeBtn;
+        DatabaseReference mDatabaseLike;
+        DatabaseReference Database;
+        FirebaseAuth mAuth;
+
+
+        public PostViewHolder(View itemView) {
+            super(itemView);
+
+            view = itemView;
+            mlikeBtn = (ImageView) view.findViewById(R.id.like_btn);
+            mDatabaseLike = FirebaseDatabase.getInstance().getReference().child("Like");
+            Database = FirebaseDatabase.getInstance().getReference().child("Post");
+            mAuth = FirebaseAuth.getInstance();
+            mDatabaseLike.keepSynced(true);
+
+        }
+
+
+        public void setLikeBtn(final String post_key) {
+
+            mDatabaseLike.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+
+                    if (mAuth.getCurrentUser() != null) {
+
+                        if (dataSnapshot.child(post_key).hasChild(mAuth.getCurrentUser().getUid())) {
+
+                            mlikeBtn.setImageResource(R.drawable.favorit);
+
+                        } else {
+
+                            mlikeBtn.setImageResource(R.drawable.unfav);
+
+                        }
+                    }
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+
+                }
+            });
+
+
+        }
+
+        public void setDesc(String desc) {
+
+            TextView post_desc = (TextView) view.findViewById(R.id.post_desc);
+            post_desc.setText(desc);
+        }
+
+        public void setCounter(String counter) {
+
+            TextView post_like = (TextView) view.findViewById(R.id.likesCount);
+            post_like.setText(counter);
+        }
+
+        public void setUsername(String username) {
+
+            TextView post_username = (TextView) view.findViewById(R.id.post_username);
+            post_username.setText(username);
+
+        }
+
+        public void setImage(final Context context, final String image) {
+
+            final ImageView post_image = (ImageView) view.findViewById(R.id.post_image);
+            //Picasso.with(context).load(image).into(post_image);
+
+            Picasso.get().load(image).into(post_image);
+
+
+        }
+
+        public void setUserImage(final Context c, String post_key) {
+
+            DatabaseReference ref = FirebaseDatabase.getInstance().getReference();
+
+            DatabaseReference s = ref.child("Post").child(post_key).child("userimage");
+            s.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    final String imagee = dataSnapshot.getValue(String.class);
+
+                    final ImageView post_userImage = (ImageView) view.findViewById(R.id.user_Image);
+
+                    Picasso.get().load(imagee).into(post_userImage);
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+
+                }
+            });
+        }
+    }
+
+    public void Go(View view) {
+
+        //  startActivity(new Intent(MainActivity.this , PostActivity.class));
+        Intent In = new Intent(Profile_Activity.this, PostActivity.class);
+        In.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(In);
+
+    }
+
+    private void loadProfilePosts() {
+
+        Query query = mQueryCurrentUser;
+
+        FirebaseRecyclerOptions<Post> options =
+                new FirebaseRecyclerOptions.Builder<Post>()
+                        .setQuery(query, Post.class)
+                        .build();
+         firebaseRecyclerAdapter = new FirebaseRecyclerAdapter<Post, PostViewHolder>(options) {
+            @NonNull
             @Override
-            protected void populateViewHolder(final PostViewHolder viewHolder, Post model, final int position) {
+            public PostViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+                View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.post_row,parent,false);
+                return new PostViewHolder(view);
+            }
 
+            @Override
+            protected void onBindViewHolder(@NonNull final PostViewHolder viewHolder, int position, @NonNull Post model) {
                 final String post_key = getRef(position).getKey();
                 Log.i("positomn", String.valueOf(position));
                 Log.i("post key", post_key);
@@ -315,143 +424,6 @@ public class Profile_Activity extends MainActivity {
 
             }
         };
-
-        PostList.setAdapter(firebaseRecyclerAdapter);
-    }
-
-    public static class PostViewHolder extends RecyclerView.ViewHolder {
-
-        View view;
-        ImageView mlikeBtn;
-        DatabaseReference mDatabaseLike;
-        DatabaseReference Database;
-        FirebaseAuth mAuth;
-
-
-        public PostViewHolder(View itemView) {
-            super(itemView);
-
-            view = itemView;
-            mlikeBtn = (ImageView) view.findViewById(R.id.like_btn);
-            mDatabaseLike = FirebaseDatabase.getInstance().getReference().child("Like");
-            Database = FirebaseDatabase.getInstance().getReference().child("Post");
-            mAuth = FirebaseAuth.getInstance();
-            mDatabaseLike.keepSynced(true);
-
-        }
-
-
-        public void setLikeBtn(final String post_key) {
-
-            mDatabaseLike.addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-
-                    if (mAuth.getCurrentUser() != null) {
-
-                        if (dataSnapshot.child(post_key).hasChild(mAuth.getCurrentUser().getUid())) {
-
-                            mlikeBtn.setImageResource(R.drawable.favorit);
-
-                        } else {
-
-                            mlikeBtn.setImageResource(R.drawable.unfav);
-
-                        }
-                    }
-                }
-
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
-
-                }
-            });
-
-
-        }
-
-        public void setDesc(String desc) {
-
-            TextView post_desc = (TextView) view.findViewById(R.id.post_desc);
-            post_desc.setText(desc);
-        }
-
-        public void setCounter(String counter) {
-
-            TextView post_like = (TextView) view.findViewById(R.id.likesCount);
-            post_like.setText(counter);
-        }
-
-        public void setUsername(String username) {
-
-            TextView post_username = (TextView) view.findViewById(R.id.post_username);
-            post_username.setText(username);
-
-        }
-
-        public void setImage(final Context context, final String image) {
-
-            final ImageView post_image = (ImageView) view.findViewById(R.id.post_image);
-            //Picasso.with(context).load(image).into(post_image);
-
-            Picasso.with(context).load(image).networkPolicy(NetworkPolicy.OFFLINE).into(post_image, new Callback() {
-                @Override
-                public void onSuccess() {
-
-                }
-
-                @Override
-                public void onError() {
-
-                    Picasso.with(context).load(image).into(post_image);
-
-                }
-            });
-
-
-        }
-
-        public void setUserImage(final Context c, String post_key) {
-
-            DatabaseReference ref = FirebaseDatabase.getInstance().getReference();
-
-            DatabaseReference s = ref.child("Post").child(post_key).child("userimage");
-            s.addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    final String imagee = dataSnapshot.getValue(String.class);
-
-                    final ImageView post_userImage = (ImageView) view.findViewById(R.id.user_Image);
-
-                    Picasso.with(c).load(imagee).networkPolicy(NetworkPolicy.OFFLINE).into(post_userImage, new Callback() {
-                        @Override
-                        public void onSuccess() {
-
-                        }
-
-                        @Override
-                        public void onError() {
-
-                            Picasso.with(c).load(imagee).into(post_userImage);
-
-                        }
-                    });
-                }
-
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
-
-                }
-            });
-        }
-    }
-
-    public void Go(View view) {
-
-        //  startActivity(new Intent(MainActivity.this , PostActivity.class));
-        Intent In = new Intent(Profile_Activity.this, PostActivity.class);
-        In.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        startActivity(In);
 
     }
 }

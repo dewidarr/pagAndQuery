@@ -97,7 +97,6 @@
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:background="@android:color/holo_blue_light"
-        android:onClick="signUpA"
         android:padding="15dp"
         android:text="not have an account? signup here"
         android:textAlignment="center"

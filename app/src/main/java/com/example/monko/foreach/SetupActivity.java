@@ -5,15 +5,21 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
@@ -79,7 +85,7 @@ public class SetupActivity extends AppCompatActivity {
         mSubmitbtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mprogressDialog.setMessage("Updating Account....");
+                mprogressDialog.setMessage("Updating Account..");
                 mprogressDialog.show();
                 startSetupAccount();
             }
@@ -172,39 +178,43 @@ public class SetupActivity extends AppCompatActivity {
             }
 
             if (mimageUri != null) {
-                StorageReference filepath = msorageImage.child(mimageUri.getLastPathSegment());
-                filepath.putFile(mimageUri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                final StorageReference filepath = msorageImage.child(mimageUri.getLastPathSegment());
+                filepath.putFile(mimageUri)
+                     .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                     @Override
                     public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                        String downloadurl = taskSnapshot.getDownloadUrl().toString();
-                        mdatabaseusers.child(user_id).child("image").setValue(downloadurl);
-                        profileImage = true;
-//                        Intent intent = new Intent(SetupActivity.this, Profile_Activity.class);
-//                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-//                        startActivity(intent);
+
+                        filepath.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                            @Override
+                            public void onSuccess(Uri uri) {
+                                mdatabaseusers.child(user_id).child("image").setValue(uri.toString());
+                                profileImage = true;
+                            }
+                        });
+
+
                     }
                 });
             }
             if (mimageGrounduri != null) {
-                StorageReference file = mstorGroundImage.child(mimageGrounduri.getLastPathSegment());
+                final StorageReference file = mstorGroundImage.child(mimageGrounduri.getLastPathSegment());
                 file.putFile(mimageGrounduri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                     @Override
                     public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                        String download = taskSnapshot.getDownloadUrl().toString();
-                        mdatabaseusers.child(user_id).child("ground").setValue(download);
-                        backgroundImage = true;
-//                        Intent intent = new Intent(SetupActivity.this, Profile_Activity.class);
-//                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-//                        startActivity(intent);
+                        file.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                            @Override
+                            public void onSuccess(Uri uri) {
+                                mdatabaseusers.child(user_id).child("ground").setValue(uri.toString());
+                                backgroundImage = true;
+                            }
+                        });
+
+
                     }
                 });
             }
             if (!TextUtils.isEmpty(name)) {
                 mdatabaseusers.child(user_id).child("name").setValue(name);
-//                Intent intent = new Intent(SetupActivity.this, Profile_Activity.class);
-//                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-//                startActivity(intent);
-
             }
         }
         if (mimageUri == null && mimageGrounduri == null && TextUtils.isEmpty(name)) {
@@ -259,7 +269,7 @@ public class SetupActivity extends AppCompatActivity {
 
     private void goToProfile() {
         Intent intent = new Intent(SetupActivity.this, Profile_Activity.class);
-        intent.putExtra("user_id",mauth.getCurrentUser().getUid() );
+        intent.putExtra("user_id", mauth.getCurrentUser().getUid());
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(intent);
     }

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.example.monko.foreach">
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
@@ -13,7 +14,9 @@
         android:label="Foreach"
         android:roundIcon="@drawable/logo2"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme"
+        tools:ignore="GoogleAppIndexingWarning">
+
         <activity android:name=".MainActivity" />
         <activity
             android:name="com.theartofdev.edmodo.cropper.CropImageActivity"
@@ -34,7 +37,6 @@
             </intent-filter>
         </activity>
         <activity android:name=".RoomsActivity" android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
-        <activity android:name=".ChatRoomActivity"></activity>
     </application>
 
 </manifest>

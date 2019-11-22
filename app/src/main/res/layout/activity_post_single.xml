@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -7,12 +7,12 @@
     android:background="@color/colorBackground"
     tools:context="com.example.monko.foreach.PostSingleActivity">
 
-    <android.support.design.widget.AppBarLayout
+    <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         >
-        <android.support.design.widget.CollapsingToolbarLayout
+        <com.google.android.material.appbar.CollapsingToolbarLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:contentScrim="?attr/colorPrimary"
@@ -20,34 +20,34 @@
             >
 
 
-            <android.support.v7.widget.Toolbar
+            <androidx.appcompat.widget.Toolbar
                 android:id="@+id/toolbar"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
                 app:layout_collapseMode="pin"
                  >
 
-            </android.support.v7.widget.Toolbar>
+            </androidx.appcompat.widget.Toolbar>
 
             <include layout="@layout/post_comments_view"
 
                 ></include>
 
+        </com.google.android.material.appbar.CollapsingToolbarLayout>
 
-        </android.support.design.widget.CollapsingToolbarLayout>
-
-    </android.support.design.widget.AppBarLayout>
-
+    </com.google.android.material.appbar.AppBarLayout>
 
 
 
-    <android.support.v7.widget.RecyclerView
+
+    <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/comment_list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="55dp"
         app:layout_behavior = "@string/appbar_scrolling_view_behavior"
-        ></android.support.v7.widget.RecyclerView>
+        ></androidx.recyclerview.widget.RecyclerView>
 
 
 
@@ -55,43 +55,41 @@
     <EditText
         android:id="@+id/writeComment"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_marginRight="8dp"
-        android:layout_marginLeft="8dp"
-        android:paddingLeft="8dp"
-        android:background="@drawable/rounded_button_blue"
-        android:ems="10"
-        android:textColor="@color/colorBackground"
-        android:hint=" Please add your reply"
-        android:inputType="textPersonName"
-        android:textSize="15sp"
+        android:layout_height="55dp"
+        android:paddingEnd="20dp"
+        android:textColorHint="#9B9999"
+        android:textColor="#ffffff"
+        android:background="@drawable/border_for_edittext"
+        android:hint=" please add your reply"
+        android:inputType="textMultiLine"
+        android:textSize="18sp"
         android:layout_gravity="bottom"
         tools:ignore="HardcodedText" />
 
     <Button
         android:id="@+id/singleRemoveBtn"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
         android:background="@mipmap/delete"
         app:layout_anchor="@id/appBarLayout"
         app:layout_anchorGravity="right|end"
-        android:layout_marginRight="8dp"
+        android:layout_marginEnd="8dp"
         android:visibility="invisible"
         tools:ignore="ObsoleteLayoutParam" />
 
 
     <Button
         android:id="@+id/pushComment"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="65dp"
+        android:layout_height="35dp"
         app:layout_anchor="@id/writeComment"
-        app:layout_anchorGravity="end|bottom"
+        app:layout_anchorGravity="end|top"
         android:layout_marginLeft="12dp"
         android:layout_marginRight="8dp"
-        android:textColor="@color/colorBackground"
+        android:textColor="#fff"
         android:background="@drawable/rounded_button_blue"
         android:text="@string/comment"
         tools:ignore="HardcodedText,RtlHardcoded" />
 
 
-</android.support.design.widget.CoordinatorLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

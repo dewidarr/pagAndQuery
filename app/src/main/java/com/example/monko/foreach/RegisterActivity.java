@@ -1,21 +1,18 @@
 package com.example.monko.foreach;
 
-import android.app.DatePickerDialog;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.Intent;
-import android.support.annotation.NonNull;
-import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
-import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.common.AccountPicker;
+import androidx.annotation.NonNull;
+import androidx.fragment.app.FragmentActivity;
+
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
@@ -43,9 +40,9 @@ public class RegisterActivity extends FragmentActivity {
 
     private ProgressDialog mProgress;
 
-    public void setdatebtn(View view){
-        PickerDialog pickerDialog=new PickerDialog();
-        pickerDialog.show(getSupportFragmentManager(),"date_picker");
+    public void setdatebtn(View view) {
+        PickerDialog pickerDialog = new PickerDialog();
+        pickerDialog.show(getSupportFragmentManager(), "date_picker");
 
     }
 
@@ -62,7 +59,7 @@ public class RegisterActivity extends FragmentActivity {
         mProgress = new ProgressDialog(this);
 
         mNameField = (EditText) findViewById(R.id.nameField);
-        mmopilenumber=(EditText)findViewById(R.id.mopilenumber);
+        mmopilenumber = (EditText) findViewById(R.id.mopilenumber);
         mEmailField = (EditText) findViewById(R.id.emailField);
         mPasswordField = (EditText) findViewById(R.id.passwordField);
         mConnfirmpassword = (EditText) findViewById(R.id.confirmpassword);
@@ -72,7 +69,7 @@ public class RegisterActivity extends FragmentActivity {
         mSignIn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent signInIntent = new Intent(RegisterActivity.this,LoginActivity.class);
+                Intent signInIntent = new Intent(RegisterActivity.this, LoginActivity.class);
                 signInIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(signInIntent);
             }
@@ -93,16 +90,15 @@ public class RegisterActivity extends FragmentActivity {
         final String number = mmopilenumber.getText().toString().trim();
         String email = mEmailField.getText().toString().trim();
 
-        Pattern p=Pattern.compile("(.*?)@");
-        final Matcher m=p.matcher(email);
+        Pattern p = Pattern.compile("(.*?)@");
+        final Matcher m = p.matcher(email);
 
         String password = mPasswordField.getText().toString().trim();
         String Connfirmpassword = mConnfirmpassword.getText().toString().trim();
 
 
-
-        if (!TextUtils.isEmpty(name) && !TextUtils.isEmpty(email) && !TextUtils.isEmpty(password) && !TextUtils.isEmpty(number) && !TextUtils.isEmpty(Birthdat) &&!TextUtils.isEmpty(Connfirmpassword)  ){
-            if(number.length()==11 ) {
+        if (!TextUtils.isEmpty(name) && !TextUtils.isEmpty(email) && !TextUtils.isEmpty(password) && !TextUtils.isEmpty(number) && !TextUtils.isEmpty(Birthdat) && !TextUtils.isEmpty(Connfirmpassword)) {
+            if (number.length() == 11) {
 
 
                 mProgress.setMessage("Signing Up.....");
@@ -152,14 +148,14 @@ public class RegisterActivity extends FragmentActivity {
                     }
                 });
 
-            }else{
-                Toast.makeText(getApplicationContext(),"wrong number",Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(getApplicationContext(), "wrong number", Toast.LENGTH_LONG).show();
 
             }
 
-        }else {
+        } else {
 
-            Toast.makeText(getApplicationContext(),"fill all fields",Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplicationContext(), "fill all fields", Toast.LENGTH_LONG).show();
 
         }
 

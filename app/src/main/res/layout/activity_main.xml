@@ -7,39 +7,46 @@
     android:background="@color/colorBackground"
     tools:context="com.example.monko.foreach.MainActivity">
 
-    <android.support.v4.widget.SwipeRefreshLayout
-    android:id="@+id/activity_main_swipe_refresh_layout"
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/activity_main_swipe_refresh_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
 
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/post_list"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        tools:layout_editor_absoluteX="12dp"
-        tools:layout_editor_absoluteY="5dp"
-        android:layout_alignParentTop="true"
-        android:nestedScrollingEnabled="false"
-        android:animateLayoutChanges="false"
-        android:layout_centerHorizontal="true"></android.support.v7.widget.RecyclerView>
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/post_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:animateLayoutChanges="false"
+            android:nestedScrollingEnabled="false"
+            tools:layout_editor_absoluteX="12dp"
+            tools:layout_editor_absoluteY="5dp"></androidx.recyclerview.widget.RecyclerView>
 
-    </android.support.v4.widget.SwipeRefreshLayout>
 
-    <android.support.design.widget.FloatingActionButton
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/goBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="22dp"
+        android:onClick="Go"
         android:src="@drawable/logo_transparent"
         app:backgroundTint="#1976d2"
-        android:layout_alignParentBottom="true"
-        android:layout_marginBottom="22dp"
-        android:layout_marginRight="16dp"
-        android:layout_alignParentRight="true"
-        android:onClick="Go"
         app:elevation="12dp"
-        app:fabSize="normal"
+        app:fabSize="normal" />
+
+    <ProgressBar
+        android:id="@+id/loading_moreData_progress"
+        android:layout_width="match_parent"
+        android:layout_height="30dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:visibility="invisible"
         />
-
-
 </RelativeLayout>
