@@ -68,13 +68,17 @@
 
     <Button
         android:id="@+id/singleRemoveBtn"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:background="@mipmap/delete"
-        app:layout_anchor="@id/appBarLayout"
-        app:layout_anchorGravity="right|end"
-        android:layout_marginEnd="8dp"
+        android:layout_width="65dp"
+        android:layout_height="35dp"
+        android:textAllCaps="false"
+        android:text="Delete"
+        android:textColor="#fff"
+        android:background="@drawable/rounded_button_red"
+        app:layout_anchor="@id/comment_list"
+        android:layout_marginTop="60dp"
+        app:layout_anchorGravity="end"
         android:visibility="invisible"
+        android:layout_marginEnd="8dp"
         tools:ignore="ObsoleteLayoutParam" />
 
 

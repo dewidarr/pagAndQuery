@@ -6,6 +6,7 @@
     <item
         android:id="@+id/profileBtn"
         android:title="Profile"
+
         app:showAsAction="never"/>
 
     <item

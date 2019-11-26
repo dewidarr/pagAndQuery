@@ -31,7 +31,7 @@
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/post_list"
+        android:id="@+id/profile_post_list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_behavior = "@string/appbar_scrolling_view_behavior"
@@ -42,10 +42,9 @@
 
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/goBtn"
+        android:id="@+id/profile_floating_action_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:onClick="Go"
         android:src="@drawable/logo_transparent"
         app:backgroundTint="#1976d2"
         android:layout_gravity="bottom|end"

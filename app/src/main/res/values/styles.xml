@@ -5,6 +5,7 @@
         <!-- Customize your theme here. -->
         <item name="colorPrimary">#1976d2</item>
         <item name="colorPrimaryDark">#1976d2</item>
+        <item name="android:itemBackground">#302F2F</item>
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 

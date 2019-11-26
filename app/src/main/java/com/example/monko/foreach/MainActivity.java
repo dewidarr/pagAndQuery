@@ -4,27 +4,25 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.AttributeSet;
-import android.view.LayoutInflater;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
-import androidx.paging.PagedList;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import com.firebase.ui.database.FirebaseRecyclerAdapter;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -32,10 +30,11 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
-import com.shreyaspatil.firebase.recyclerpagination.DatabasePagingOptions;
-import com.shreyaspatil.firebase.recyclerpagination.FirebaseRecyclerPagingAdapter;
-import com.shreyaspatil.firebase.recyclerpagination.LoadingState;
 import com.squareup.picasso.Picasso;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -55,38 +54,20 @@ public class MainActivity extends AppCompatActivity {
     public final String mypreference = "mypref";
     private SharedPreferences sharedpreferences;
     private SwipeRefreshLayout mSwipeRefreshLayout;
-    private FirebaseRecyclerPagingAdapter<Post, PostViewHolder> firebaseRecyclerAdapter;
+    //    private FirebaseRecyclerPagingAdapter<Post, PostViewHolder> firebaseRecyclerAdapter;
+    private FirebaseRecyclerAdapter firebaseRecyclerAdapterOptions;
     private ProgressBar loadingMoreDataProgressBar;
+    private List<Post> postsList = new ArrayList<>();
+    private PostsAdapter postsAdapter;
+    public static boolean upOrDown;
 
+    private int limit = 10;
+    private int start = 0;
+    //to know if reach the last data of database
+    private boolean firstTime = true;
 
-    public void Goprof(View view) {
+    private FloatingActionButton floatingActionButton;
 
-        //startActivity(new Intent(MainActivity.this , Profile_Activity.class));
-        Intent Intent = new Intent(MainActivity.this, Profile_Activity.class);
-        Intent.putExtra("user_id", mAuth.getCurrentUser().getUid());
-        Intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        startActivity(Intent);
-
-    }
-
-
-    public void Go(View view) {
-
-        //  startActivity(new Intent(MainActivity.this , PostActivity.class));
-        Intent In = new Intent(MainActivity.this, PostActivity.class);
-        In.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        startActivity(In);
-
-    }
-
-   /* public void Room(View view) {
-
-        //  startActivity(new Intent(MainActivity.this , PostActivity.class));
-        Intent In = new Intent(MainActivity.this, RoomsActivity.class);
-        In.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        startActivity(In);
-
-    }*/
 
     public void logOut(View view) {
 
@@ -111,15 +92,36 @@ public class MainActivity extends AppCompatActivity {
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
             }
         }
-        mSwipeRefreshLayout =  findViewById(R.id.activity_main_swipe_refresh_layout);
+        mSwipeRefreshLayout = findViewById(R.id.activity_main_swipe_refresh_layout);
         mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
                 onStart();
             }
         });
+        floatingActionButton = findViewById(R.id.floating_action_bar);
+        floatingActionButtonListner();
 
+        prepareDatabase();
+    }
 
+    private void floatingActionButtonListner() {
+
+        floatingActionButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (upOrDown) {
+                    Intent In = new Intent(MainActivity.this, PostActivity.class);
+                    In.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    startActivity(In);
+                }else if (!upOrDown){
+                    mLayoutManager.scrollToPositionWithOffset(0, 0);
+                }
+            }
+        });
+    }
+
+    private void prepareDatabase() {
         mAuth = FirebaseAuth.getInstance();
 
         mAuthStateListener = new FirebaseAuth.AuthStateListener() {
@@ -138,10 +140,6 @@ public class MainActivity extends AppCompatActivity {
         Database = FirebaseDatabase.getInstance().getReference().child("Post");
         mDatabaseUsers = FirebaseDatabase.getInstance().getReference().child("users");
         mDatabaseLike = FirebaseDatabase.getInstance().getReference().child("Like");
-        //  String currentUserId=mAuth.getCurrentUser().getUid();
-
-        //mDatabaseCurrentUser=FirebaseDatabase.getInstance().getReference().child("Post");
-        // mQueryCurrentUser=mDatabaseCurrentUser.orderByChild("uid").equalTo(currentUserId);
 
 
         mDatabaseUsers.keepSynced(true);
@@ -151,12 +149,37 @@ public class MainActivity extends AppCompatActivity {
         PostList = (RecyclerView) findViewById(R.id.post_list);
         PostList.setHasFixedSize(true);
         mLayoutManager = new LinearLayoutManager(MainActivity.this);
-        mLayoutManager.findFirstVisibleItemPosition();
-//        mLayoutManager.setReverseLayout(true);
-//        mLayoutManager.setStackFromEnd(true);
-        PostList.setLayoutManager(mLayoutManager);
 
-        loadPostsPagination();
+
+        PostList.setLayoutManager(mLayoutManager);
+        PostList.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+
+                if (!recyclerView.canScrollVertically(RecyclerView.FOCUS_DOWN)) {
+                    Query query1 = Database;
+                    query1.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                            start += limit + 1;
+                            limit += 10;
+                            Query query = Database.limitToLast(limit);
+                            loadingMoreDataProgressBar.setVisibility(View.VISIBLE);
+                            loadMorPosts(query, start, dataSnapshot.getChildrenCount());
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                        }
+                    });
+
+                }
+            }
+        });
+        Query query = Database.limitToLast(limit);
+        loadPostsPagination(query);
+
     }
 
     @Override
@@ -164,15 +187,13 @@ public class MainActivity extends AppCompatActivity {
         super.onStart();
         checksUserExist();
         mAuth.addAuthStateListener(mAuthStateListener);
-        firebaseRecyclerAdapter.startListening();
-        PostList.setAdapter(firebaseRecyclerAdapter);
         mSwipeRefreshLayout.setRefreshing(false);
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        firebaseRecyclerAdapter.stopListening();
+//        firebaseRecyclerAdapterOptions.stopListening();
     }
 
     private void checksUserExist() {
@@ -318,6 +339,7 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.main_menu, menu);
+
         return true;
     }
 
@@ -374,12 +396,187 @@ public class MainActivity extends AppCompatActivity {
         finish();
     }
 
-    private void loadPostsPagination(){
-        Query baseQuery = Database;
+    private void loadPostsPagination(Query query) {
+
+     /*   FirebaseRecyclerOptions<Post> options =
+                new FirebaseRecyclerOptions.Builder<Post>()
+                        .setQuery(query, Post.class)
+                        .build()*/
+        ;
+        query.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                for (DataSnapshot data : dataSnapshot.getChildren()) {
+                    Post post = data.getValue(Post.class);
+                    post.setKey(data.getKey());
+                    postsList.add(post);
+                }
+                Collections.reverse(postsList);
+                postsAdapter = new PostsAdapter(postsList);
+                postsAdapter.setFloatingActionButton(floatingActionButton);
+                PostList.setAdapter(postsAdapter);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+
+/*        firebaseRecyclerAdapterOptions = new FirebaseRecyclerAdapter<Post, PostViewHolder>(options) {
+
+
+            @NonNull
+            @Override
+            public PostViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+                View view = LayoutInflater.from(parent.getContext())
+                        .inflate(R.layout.post_row, parent, false);
+                return new PostViewHolder(view);
+            }
+
+            @Override
+            protected void onBindViewHolder(@NonNull final PostViewHolder viewHolder, int position, @NonNull Post model) {
+                final String post_key = getRef(position).getKey();
+
+                DatabaseReference likes = Database.child(post_key).child("likes");
+                likes.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        counter = dataSnapshot.getValue(Integer.class);
+                        viewHolder.setCounter(String.valueOf(counter));
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
+
+                viewHolder.setDesc(model.getDesc());
+                viewHolder.setDate(model.getDate());
+                viewHolder.setImage(getApplicationContext(), model.getImage());
+                viewHolder.setUsername(model.getUsername());
+                viewHolder.setUserImage(getApplicationContext(), post_key);
+                viewHolder.setLikeBtn(post_key);
+
+
+                viewHolder.view.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        //Toast.makeText(MainActivity.this,post_key,Toast.LENGTH_LONG).show();
+
+                        Intent singlePostIntent = new Intent(MainActivity.this, PostSingleActivity.class);
+                        singlePostIntent.putExtra("Post_Id", post_key);
+
+                        singlePostIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+                        startActivity(singlePostIntent);
+                    }
+                });
+
+                viewHolder.mUserImage.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        DatabaseReference likes = Database.child(post_key).child("uid");
+                        likes.addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                String use = dataSnapshot.getValue(String.class);
+                                Intent Intent = new Intent(MainActivity.this, Profile_Activity.class);
+                                Intent.putExtra("user_id", use);
+                                Intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                                startActivity(Intent);
+
+                            }
+
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {
+
+                            }
+                        });
+
+
+                    }
+                });
+
+                viewHolder.mlikeBtn.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        mProcessLike = true;
+
+                        DatabaseReference likes = Database.child(post_key).child("likes");
+                        likes.addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                counter = dataSnapshot.getValue(Integer.class);
+                            }
+
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {
+
+                            }
+                        });
+
+                        mDatabaseLike.addValueEventListener(new ValueEventListener() {
+
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
+
+                                if (mProcessLike) {
+
+                                    if (dataSnapshot.child(post_key).hasChild(mAuth.getCurrentUser().getUid())) {
+
+                                        counter--;
+                                        //viewHolder.setLikesCount(counter);
+                                        Database.child(post_key).child("likes").setValue(counter);
+
+                                        mDatabaseLike.child(post_key).child(mAuth.getCurrentUser().getUid()).removeValue();
+
+                                        mProcessLike = false;
+
+                                    } else {
+
+                                        counter++;
+                                        //viewHolder.setLikesCount(counter);
+
+                                        Database.child(post_key).child("likes").setValue(counter);
+
+                                        mDatabaseLike.child(post_key).child(mAuth.getCurrentUser().getUid()).setValue("random value");
+
+                                        mProcessLike = false;
+                                    }
+                                    notifyDataSetChanged();
+                                }
+
+                            }
+
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {
+
+                            }
+
+                        });
+                    }
+                });
+            }
+
+
+        };*/
+
+
+//        firebaseRecyclerAdapterOptions.startListening();
+//        PostList.setAdapter(firebaseRecyclerAdapterOptions);
+
+        /*
+         pagination
+         */
+
+    /*    Query baseQuery = Database.orderByChild("counter");
         PagedList.Config config = new PagedList.Config.Builder()
                 .setEnablePlaceholders(false)
-                .setPrefetchDistance(2)
-                .setPageSize(3)
+                .setPrefetchDistance(5)
+                .setPageSize(5)
                 .build();
 
 
@@ -501,7 +698,7 @@ public class MainActivity extends AppCompatActivity {
 
                                         mProcessLike = false;
                                     }
-                                   notifyDataSetChanged();
+                                    notifyDataSetChanged();
                                 }
 
                             }
@@ -517,16 +714,16 @@ public class MainActivity extends AppCompatActivity {
 
             }
 
-           /* @Nullable
+           *//* @Nullable
             @Override
             protected DataSnapshot getItem(int position) {
                 return super.getItem(getItemCount() - 1 - position);
-            }*/
+            }*//*
 
             @Override
             protected void onLoadingStateChanged(@NonNull LoadingState state) {
 
-                switch (state){
+                switch (state) {
                     case LOADING_MORE:
                         loadingMoreDataProgressBar.setVisibility(View.VISIBLE);
                     case LOADED:
@@ -544,6 +741,40 @@ public class MainActivity extends AppCompatActivity {
                         .inflate(R.layout.post_row, parent, false);
                 return new PostViewHolder(view);
             }
-        };
+        };*/
+
+    }
+
+    private void loadMorPosts(Query query, final int start, final long allPostsCount) {
+
+        query.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if (firstTime) {
+                    if (dataSnapshot.getChildrenCount() == allPostsCount) {
+                        firstTime = false;
+                    }
+                    List<Post> morePosts = new ArrayList<>();
+                    for (DataSnapshot data : dataSnapshot.getChildren()) {
+                        Post post = data.getValue(Post.class);
+                        post.setKey(data.getKey());
+                        morePosts.add(post);
+                    }
+                    List<Post> reverseList = morePosts.subList(0, 10);
+                    Collections.reverse(reverseList);
+                    postsAdapter.setPostsList(reverseList);
+                    loadingMoreDataProgressBar.setVisibility(View.INVISIBLE);
+                } else {
+                    loadingMoreDataProgressBar.setVisibility(View.INVISIBLE);
+                    Toast.makeText(MainActivity.this, "No more Posts", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
     }
 }
+

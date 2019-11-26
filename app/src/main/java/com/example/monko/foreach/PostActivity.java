@@ -46,6 +46,7 @@ public class PostActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private FirebaseUser mCurrentUser;
     private DatabaseReference mDataBaseUser;
+    private long numberOfPosts =0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,11 +93,24 @@ public class PostActivity extends AppCompatActivity {
     //upload the data to firebase
     private void createPost() {
 
+        mDataBase.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                   if (dataSnapshot.exists()){
+                       numberOfPosts = dataSnapshot.getChildrenCount();
+                   }else {
+                       numberOfPosts =0;
+                   }
+            }
 
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
         final String desc_post = mPostdesc.getText().toString().trim();
         DateFormat df = new SimpleDateFormat("EEE, d MMM yyyy, HH:mm");
         final String datepost = df.format(Calendar.getInstance().getTime());
-        Toast.makeText(getApplicationContext(), datepost, Toast.LENGTH_LONG).show();
 
         if (!TextUtils.isEmpty(desc_post) && mimageUri != null) {
 
@@ -118,11 +132,11 @@ public class PostActivity extends AppCompatActivity {
                             mDataBaseUser.addValueEventListener(new ValueEventListener() {
                                 @Override
                                 public void onDataChange(DataSnapshot dataSnapshot) {
-
                                     newPost.child("desc").setValue(desc_post);
                                     newPost.child("image").setValue(downloadUrl.toString());
                                     newPost.child("likes").setValue(0);
                                     newPost.child("date").setValue(datepost);
+                                    newPost.child("counter").setValue(numberOfPosts);
                                     newPost.child("uid").setValue(mCurrentUser.getUid());
                                     newPost.child("username").setValue(dataSnapshot.child("name").getValue()).addOnCompleteListener(new OnCompleteListener<Void>() {
                                         @Override

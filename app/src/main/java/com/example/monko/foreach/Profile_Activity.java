@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.firebase.ui.database.FirebaseRecyclerOptions;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -52,6 +53,7 @@ public class Profile_Activity extends MainActivity {
     private boolean mProcessLike = false;
     private int counter;
     private RecyclerView PostList;
+    private FloatingActionButton floatingActionButton;
 
     private FirebaseRecyclerAdapter<Post, PostViewHolder> firebaseRecyclerAdapter;
 
@@ -89,6 +91,16 @@ public class Profile_Activity extends MainActivity {
         profileimage = (ImageView) findViewById(R.id.imageprofilepic);
         groundimage = (ImageView) findViewById(R.id.imageground);
         username = (TextView) findViewById(R.id.textNameprof);
+        floatingActionButton = findViewById(R.id.profile_floating_action_button);
+
+        floatingActionButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent In = new Intent(Profile_Activity.this, PostActivity.class);
+                In.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(In);
+            }
+        });
 
 //        GoMain=(Button)findViewById(R.id.button4);
 
@@ -146,16 +158,7 @@ public class Profile_Activity extends MainActivity {
             }
         });
 
-//        GoMain.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                Intent intent = new Intent(Profile_Activity.this,MainActivity.class);
-//                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-//                startActivity(intent);
-//            }
-//        });
 
-        //**************************************************************************************************
 
         mAuth = FirebaseAuth.getInstance();
 
@@ -173,9 +176,12 @@ public class Profile_Activity extends MainActivity {
         mDatabaseLike.keepSynced(true);
         Database.keepSynced(true);
 
-        PostList = (RecyclerView) findViewById(R.id.post_list);
+        PostList = (RecyclerView) findViewById(R.id.profile_post_list);
         PostList.setHasFixedSize(true);
-        PostList.setLayoutManager(new LinearLayoutManager(this));
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
+        linearLayoutManager.setReverseLayout(true);
+        linearLayoutManager.setStackFromEnd(true);
+        PostList.setLayoutManager(linearLayoutManager);
 
         loadProfilePosts();
     }
@@ -251,7 +257,11 @@ public class Profile_Activity extends MainActivity {
             TextView post_desc = (TextView) view.findViewById(R.id.post_desc);
             post_desc.setText(desc);
         }
+        public void setDate(String date) {
 
+            TextView post_date = (TextView) view.findViewById(R.id.textDate);
+            post_date.setText(date);
+        }
         public void setCounter(String counter) {
 
             TextView post_like = (TextView) view.findViewById(R.id.likesCount);
@@ -298,15 +308,6 @@ public class Profile_Activity extends MainActivity {
         }
     }
 
-    public void Go(View view) {
-
-        //  startActivity(new Intent(MainActivity.this , PostActivity.class));
-        Intent In = new Intent(Profile_Activity.this, PostActivity.class);
-        In.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        startActivity(In);
-
-    }
-
     private void loadProfilePosts() {
 
         Query query = mQueryCurrentUser;
@@ -345,6 +346,7 @@ public class Profile_Activity extends MainActivity {
 
 
                 viewHolder.setDesc(model.getDesc());
+                viewHolder.setDate(model.getDate());
                 viewHolder.setImage(getApplicationContext(), model.getImage());
                 viewHolder.setUsername(model.getUsername());
                 viewHolder.setUserImage(getApplicationContext(), post_key);

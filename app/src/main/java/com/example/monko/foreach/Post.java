@@ -6,14 +6,15 @@ public class Post {
     private String image;
     private String username;
     private String userImage;
-    private String counter;
+    private long counter;
     private String Date;
+    private String key;
 
     public Post(){
 
     }
 
-    public Post(String desc, String image,String counter,String userImage) {
+    public Post(String desc, String image,long counter,String userImage) {
         this.desc = desc;
         this.image = image;
         this.username = username;
@@ -46,11 +47,11 @@ public class Post {
         this.username = username;
     }
 
-    public String getCounter() {
+    public long getCounter() {
         return counter;
     }
 
-    public void setCounter(String counter) {
+    public void setCounter(long counter) {
         this.counter = counter;
     }
 
@@ -68,5 +69,13 @@ public class Post {
 
     public void setDate(String date) {
         Date = date;
+    }
+
+    public String getKey() {
+        return key;
+    }
+
+    public void setKey(String key) {
+        this.key = key;
     }
 }
