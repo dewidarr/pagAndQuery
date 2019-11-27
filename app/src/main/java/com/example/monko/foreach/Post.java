@@ -9,18 +9,19 @@ public class Post {
     private long counter;
     private String Date;
     private String key;
+    private int commentsNumber;
 
-    public Post(){
+    public Post() {
 
     }
 
-    public Post(String desc, String image,long counter,String userImage) {
+    public Post(String desc, String image, long counter, String userImage, int commentsNumber) {
         this.desc = desc;
         this.image = image;
         this.username = username;
         this.userImage = userImage;
         this.counter = counter;
-
+        this.commentsNumber = commentsNumber;
     }
 
     public String getDesc() {
@@ -77,5 +78,13 @@ public class Post {
 
     public void setKey(String key) {
         this.key = key;
+    }
+
+    public int getCommentsNumber() {
+        return commentsNumber;
+    }
+
+    public void setCommentsNumber(int commentsNumber) {
+        this.commentsNumber = commentsNumber;
     }
 }

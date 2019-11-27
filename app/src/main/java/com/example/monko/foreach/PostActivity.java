@@ -46,7 +46,8 @@ public class PostActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private FirebaseUser mCurrentUser;
     private DatabaseReference mDataBaseUser;
-    private long numberOfPosts =0;
+    private long numberOfPosts = 0;
+    private static boolean thereNewPost;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,11 +97,11 @@ public class PostActivity extends AppCompatActivity {
         mDataBase.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                   if (dataSnapshot.exists()){
-                       numberOfPosts = dataSnapshot.getChildrenCount();
-                   }else {
-                       numberOfPosts =0;
-                   }
+                if (dataSnapshot.exists()) {
+                    numberOfPosts = dataSnapshot.getChildrenCount();
+                } else {
+                    numberOfPosts = 0;
+                }
             }
 
             @Override
@@ -132,6 +133,7 @@ public class PostActivity extends AppCompatActivity {
                             mDataBaseUser.addValueEventListener(new ValueEventListener() {
                                 @Override
                                 public void onDataChange(DataSnapshot dataSnapshot) {
+                                    newPost.child("commentsNumber").setValue(0);
                                     newPost.child("desc").setValue(desc_post);
                                     newPost.child("image").setValue(downloadUrl.toString());
                                     newPost.child("likes").setValue(0);
@@ -143,10 +145,10 @@ public class PostActivity extends AppCompatActivity {
                                         public void onComplete(@NonNull Task<Void> task) {
 
                                             if (task.isSuccessful()) {
-
+                                                finish();
                                                 startActivity(new Intent(PostActivity.this, MainActivity.class));
                                             } else {
-                                                Toast.makeText(getApplicationContext(), "errorfirebase", Toast.LENGTH_LONG);
+                                                Toast.makeText(getApplicationContext(), "please check your internet", Toast.LENGTH_LONG);
 
                                             }
 
@@ -158,9 +160,9 @@ public class PostActivity extends AppCompatActivity {
 
                                             if (task.isSuccessful()) {
 
-                                                startActivity(new Intent(PostActivity.this, MainActivity.class));
+//                                                startActivity(new Intent(PostActivity.this, MainActivity.class));
                                             } else {
-                                                Toast.makeText(getApplicationContext(), "errorfirebase", Toast.LENGTH_LONG);
+                                                Toast.makeText(getApplicationContext(), "please upload an profile picture", Toast.LENGTH_LONG);
 
                                             }
 

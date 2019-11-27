@@ -154,8 +154,26 @@ public class PostSingleActivity extends AppCompatActivity {
     }
 
     private void createComment() {
+        //update comments counter in child "post"
+        Query query = Database.child(mPost_key).child("commentsNumber");
+        query.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+             if (dataSnapshot.getValue() != null){
+                 int num = dataSnapshot.getValue(Integer.class);
+                 Database.child(mPost_key).child("commentsNumber").setValue(num +1);
+             }
+             else {
+                 Database.child(mPost_key).child("commentsNumber").setValue(1);
+             }
 
+            }
 
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
         final String comment = writeComment.getText().toString().trim();
         if (!TextUtils.isEmpty(comment)) {
 
@@ -185,7 +203,7 @@ public class PostSingleActivity extends AppCompatActivity {
                         public void onComplete(@NonNull Task<Void> task) {
 
                             if (task.isSuccessful()) {
-                                     writeComment.setText("");
+                                writeComment.setText("");
                             } else {
                                 Toast.makeText(getApplicationContext(), "sorry try again later", Toast.LENGTH_LONG);
 
@@ -305,7 +323,7 @@ public class PostSingleActivity extends AppCompatActivity {
         }
     }
 
-    private void loadSinglePost(){
+    private void loadSinglePost() {
         Query query = mDatabaseCom;
         FirebaseRecyclerOptions<Comment> options =
                 new FirebaseRecyclerOptions.Builder<Comment>()

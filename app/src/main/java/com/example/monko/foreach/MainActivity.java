@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -21,7 +20,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
-import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -44,27 +42,23 @@ public class MainActivity extends AppCompatActivity {
     private DatabaseReference Database;
     private DatabaseReference mDatabaseUsers;
     private DatabaseReference mDatabaseLike;
-    private DatabaseReference mDatabaseCurrentUser;
-    private DatabaseReference mDatabaseCounterLike;
-    private Query mQueryCurrentUser;
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthStateListener;
-    private boolean mProcessLike = false;
-    private int counter;
     public final String mypreference = "mypref";
     private SharedPreferences sharedpreferences;
     private SwipeRefreshLayout mSwipeRefreshLayout;
-    //    private FirebaseRecyclerPagingAdapter<Post, PostViewHolder> firebaseRecyclerAdapter;
-    private FirebaseRecyclerAdapter firebaseRecyclerAdapterOptions;
     private ProgressBar loadingMoreDataProgressBar;
     private List<Post> postsList = new ArrayList<>();
     private PostsAdapter postsAdapter;
     public static boolean upOrDown;
+    private DatabaseReference commentRef;
 
-    private int limit = 10;
+    private int limit = 15;
     private int start = 0;
     //to know if reach the last data of database
     private boolean firstTime = true;
+    private long isThereNewPosts = 0;
+    private int numOfPosts = 0;
 
     private FloatingActionButton floatingActionButton;
 
@@ -96,13 +90,51 @@ public class MainActivity extends AppCompatActivity {
         mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                onStart();
+                Database.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        if (numOfPosts != 0 && dataSnapshot.getChildrenCount() > numOfPosts) {
+                            Query query
+                                    = Database.limitToLast((int) (dataSnapshot.getChildrenCount() - numOfPosts));
+                            refreshForNewPosts(query);
+                        } else {
+                            Toast.makeText(MainActivity.this, "no more posts yet ):", Toast.LENGTH_SHORT).show();
+                            mSwipeRefreshLayout.setRefreshing(false);
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                    }
+                });
+
+                postsAdapter.notifyDataSetChanged();
             }
         });
         floatingActionButton = findViewById(R.id.floating_action_bar);
         floatingActionButtonListner();
 
         prepareDatabase();
+
+        saveNumberOfPosts();
+    }
+
+    private void saveNumberOfPosts() {
+        Query q = Database;
+        q.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    numOfPosts = (int) dataSnapshot.getChildrenCount();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
     }
 
     private void floatingActionButtonListner() {
@@ -114,8 +146,8 @@ public class MainActivity extends AppCompatActivity {
                     Intent In = new Intent(MainActivity.this, PostActivity.class);
                     In.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                     startActivity(In);
-                }else if (!upOrDown){
-                    mLayoutManager.scrollToPositionWithOffset(0, 0);
+                } else if (!upOrDown) {
+                    mLayoutManager.smoothScrollToPosition(PostList, new RecyclerView.State(), 0);
                 }
             }
         });
@@ -140,6 +172,7 @@ public class MainActivity extends AppCompatActivity {
         Database = FirebaseDatabase.getInstance().getReference().child("Post");
         mDatabaseUsers = FirebaseDatabase.getInstance().getReference().child("users");
         mDatabaseLike = FirebaseDatabase.getInstance().getReference().child("Like");
+        commentRef = FirebaseDatabase.getInstance().getReference().child("Comment");
 
 
         mDatabaseUsers.keepSynced(true);
@@ -162,9 +195,10 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                             start += limit + 1;
-                            limit += 10;
+                            limit += 15;
                             Query query = Database.limitToLast(limit);
                             loadingMoreDataProgressBar.setVisibility(View.VISIBLE);
+                            isThereNewPosts = dataSnapshot.getChildrenCount();
                             loadMorPosts(query, start, dataSnapshot.getChildrenCount());
                         }
 
@@ -173,7 +207,9 @@ public class MainActivity extends AppCompatActivity {
 
                         }
                     });
-
+                } else if (mLayoutManager.findFirstCompletelyVisibleItemPosition() == 0) {
+                    floatingActionButton.setImageDrawable(getResources().getDrawable(R.drawable.logo_transparent));
+                    upOrDown = true;
                 }
             }
         });
@@ -187,7 +223,6 @@ public class MainActivity extends AppCompatActivity {
         super.onStart();
         checksUserExist();
         mAuth.addAuthStateListener(mAuthStateListener);
-        mSwipeRefreshLayout.setRefreshing(false);
     }
 
     @Override
@@ -339,7 +374,6 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.main_menu, menu);
-
         return true;
     }
 
@@ -398,11 +432,6 @@ public class MainActivity extends AppCompatActivity {
 
     private void loadPostsPagination(Query query) {
 
-     /*   FirebaseRecyclerOptions<Post> options =
-                new FirebaseRecyclerOptions.Builder<Post>()
-                        .setQuery(query, Post.class)
-                        .build()*/
-        ;
         query.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -423,326 +452,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-/*        firebaseRecyclerAdapterOptions = new FirebaseRecyclerAdapter<Post, PostViewHolder>(options) {
-
-
-            @NonNull
-            @Override
-            public PostViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-                View view = LayoutInflater.from(parent.getContext())
-                        .inflate(R.layout.post_row, parent, false);
-                return new PostViewHolder(view);
-            }
-
-            @Override
-            protected void onBindViewHolder(@NonNull final PostViewHolder viewHolder, int position, @NonNull Post model) {
-                final String post_key = getRef(position).getKey();
-
-                DatabaseReference likes = Database.child(post_key).child("likes");
-                likes.addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        counter = dataSnapshot.getValue(Integer.class);
-                        viewHolder.setCounter(String.valueOf(counter));
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-
-                    }
-                });
-
-                viewHolder.setDesc(model.getDesc());
-                viewHolder.setDate(model.getDate());
-                viewHolder.setImage(getApplicationContext(), model.getImage());
-                viewHolder.setUsername(model.getUsername());
-                viewHolder.setUserImage(getApplicationContext(), post_key);
-                viewHolder.setLikeBtn(post_key);
-
-
-                viewHolder.view.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        //Toast.makeText(MainActivity.this,post_key,Toast.LENGTH_LONG).show();
-
-                        Intent singlePostIntent = new Intent(MainActivity.this, PostSingleActivity.class);
-                        singlePostIntent.putExtra("Post_Id", post_key);
-
-                        singlePostIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-
-                        startActivity(singlePostIntent);
-                    }
-                });
-
-                viewHolder.mUserImage.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        DatabaseReference likes = Database.child(post_key).child("uid");
-                        likes.addListenerForSingleValueEvent(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(DataSnapshot dataSnapshot) {
-                                String use = dataSnapshot.getValue(String.class);
-                                Intent Intent = new Intent(MainActivity.this, Profile_Activity.class);
-                                Intent.putExtra("user_id", use);
-                                Intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                                startActivity(Intent);
-
-                            }
-
-                            @Override
-                            public void onCancelled(DatabaseError databaseError) {
-
-                            }
-                        });
-
-
-                    }
-                });
-
-                viewHolder.mlikeBtn.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-
-                        mProcessLike = true;
-
-                        DatabaseReference likes = Database.child(post_key).child("likes");
-                        likes.addListenerForSingleValueEvent(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(DataSnapshot dataSnapshot) {
-                                counter = dataSnapshot.getValue(Integer.class);
-                            }
-
-                            @Override
-                            public void onCancelled(DatabaseError databaseError) {
-
-                            }
-                        });
-
-                        mDatabaseLike.addValueEventListener(new ValueEventListener() {
-
-                            @Override
-                            public void onDataChange(DataSnapshot dataSnapshot) {
-
-                                if (mProcessLike) {
-
-                                    if (dataSnapshot.child(post_key).hasChild(mAuth.getCurrentUser().getUid())) {
-
-                                        counter--;
-                                        //viewHolder.setLikesCount(counter);
-                                        Database.child(post_key).child("likes").setValue(counter);
-
-                                        mDatabaseLike.child(post_key).child(mAuth.getCurrentUser().getUid()).removeValue();
-
-                                        mProcessLike = false;
-
-                                    } else {
-
-                                        counter++;
-                                        //viewHolder.setLikesCount(counter);
-
-                                        Database.child(post_key).child("likes").setValue(counter);
-
-                                        mDatabaseLike.child(post_key).child(mAuth.getCurrentUser().getUid()).setValue("random value");
-
-                                        mProcessLike = false;
-                                    }
-                                    notifyDataSetChanged();
-                                }
-
-                            }
-
-                            @Override
-                            public void onCancelled(DatabaseError databaseError) {
-
-                            }
-
-                        });
-                    }
-                });
-            }
-
-
-        };*/
-
-
-//        firebaseRecyclerAdapterOptions.startListening();
-//        PostList.setAdapter(firebaseRecyclerAdapterOptions);
-
-        /*
-         pagination
-         */
-
-    /*    Query baseQuery = Database.orderByChild("counter");
-        PagedList.Config config = new PagedList.Config.Builder()
-                .setEnablePlaceholders(false)
-                .setPrefetchDistance(5)
-                .setPageSize(5)
-                .build();
-
-
-        DatabasePagingOptions<Post> options = new DatabasePagingOptions.Builder<Post>()
-                .setLifecycleOwner(this)
-                .setQuery(baseQuery, config, Post.class)
-                .build();
-
-        firebaseRecyclerAdapter = new FirebaseRecyclerPagingAdapter<Post, PostViewHolder>(options) {
-            @Override
-            protected void onBindViewHolder(@NonNull final PostViewHolder viewHolder, int position, @NonNull Post model) {
-                final String post_key = getRef(position).getKey();
-
-                DatabaseReference likes = Database.child(post_key).child("likes");
-                likes.addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        counter = dataSnapshot.getValue(Integer.class);
-                        viewHolder.setCounter(String.valueOf(counter));
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-
-                    }
-                });
-
-                viewHolder.setDesc(model.getDesc());
-                viewHolder.setDate(model.getDate());
-                viewHolder.setImage(getApplicationContext(), model.getImage());
-                viewHolder.setUsername(model.getUsername());
-                viewHolder.setUserImage(getApplicationContext(), post_key);
-                viewHolder.setLikeBtn(post_key);
-
-
-                viewHolder.view.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        //Toast.makeText(MainActivity.this,post_key,Toast.LENGTH_LONG).show();
-
-                        Intent singlePostIntent = new Intent(MainActivity.this, PostSingleActivity.class);
-                        singlePostIntent.putExtra("Post_Id", post_key);
-
-                        singlePostIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-
-                        startActivity(singlePostIntent);
-                    }
-                });
-
-                viewHolder.mUserImage.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        DatabaseReference likes = Database.child(post_key).child("uid");
-                        likes.addListenerForSingleValueEvent(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(DataSnapshot dataSnapshot) {
-                                String use = dataSnapshot.getValue(String.class);
-                                Intent Intent = new Intent(MainActivity.this, Profile_Activity.class);
-                                Intent.putExtra("user_id", use);
-                                Intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                                startActivity(Intent);
-
-                            }
-
-                            @Override
-                            public void onCancelled(DatabaseError databaseError) {
-
-                            }
-                        });
-
-
-                    }
-                });
-
-                viewHolder.mlikeBtn.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-
-                        mProcessLike = true;
-
-                        DatabaseReference likes = Database.child(post_key).child("likes");
-                        likes.addListenerForSingleValueEvent(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(DataSnapshot dataSnapshot) {
-                                counter = dataSnapshot.getValue(Integer.class);
-                            }
-
-                            @Override
-                            public void onCancelled(DatabaseError databaseError) {
-
-                            }
-                        });
-
-                        mDatabaseLike.addValueEventListener(new ValueEventListener() {
-
-                            @Override
-                            public void onDataChange(DataSnapshot dataSnapshot) {
-
-                                if (mProcessLike) {
-
-                                    if (dataSnapshot.child(post_key).hasChild(mAuth.getCurrentUser().getUid())) {
-
-                                        counter--;
-                                        //viewHolder.setLikesCount(counter);
-                                        Database.child(post_key).child("likes").setValue(counter);
-
-                                        mDatabaseLike.child(post_key).child(mAuth.getCurrentUser().getUid()).removeValue();
-
-                                        mProcessLike = false;
-
-                                    } else {
-
-                                        counter++;
-                                        //viewHolder.setLikesCount(counter);
-
-                                        Database.child(post_key).child("likes").setValue(counter);
-
-                                        mDatabaseLike.child(post_key).child(mAuth.getCurrentUser().getUid()).setValue("random value");
-
-                                        mProcessLike = false;
-                                    }
-                                    notifyDataSetChanged();
-                                }
-
-                            }
-
-                            @Override
-                            public void onCancelled(DatabaseError databaseError) {
-
-                            }
-
-                        });
-                    }
-                });
-
-            }
-
-           *//* @Nullable
-            @Override
-            protected DataSnapshot getItem(int position) {
-                return super.getItem(getItemCount() - 1 - position);
-            }*//*
-
-            @Override
-            protected void onLoadingStateChanged(@NonNull LoadingState state) {
-
-                switch (state) {
-                    case LOADING_MORE:
-                        loadingMoreDataProgressBar.setVisibility(View.VISIBLE);
-                    case LOADED:
-                        Toast.makeText(MainActivity.this, "loaded", Toast.LENGTH_SHORT).show();
-//                        loadingMoreDataProgressBar.setVisibility(View.INVISIBLE);
-
-                }
-
-            }
-
-            @NonNull
-            @Override
-            public PostViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-                View view = LayoutInflater.from(parent.getContext())
-                        .inflate(R.layout.post_row, parent, false);
-                return new PostViewHolder(view);
-            }
-        };*/
-
     }
 
     private void loadMorPosts(Query query, final int start, final long allPostsCount) {
@@ -750,24 +459,59 @@ public class MainActivity extends AppCompatActivity {
         query.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                int lastPosts = 0;
                 if (firstTime) {
                     if (dataSnapshot.getChildrenCount() == allPostsCount) {
                         firstTime = false;
+                        lastPosts = (int) (allPostsCount - (limit - 15));
                     }
                     List<Post> morePosts = new ArrayList<>();
-                    for (DataSnapshot data : dataSnapshot.getChildren()) {
-                        Post post = data.getValue(Post.class);
-                        post.setKey(data.getKey());
-                        morePosts.add(post);
+                    if (lastPosts == 0) {
+                        lastPosts = 15;
                     }
-                    List<Post> reverseList = morePosts.subList(0, 10);
-                    Collections.reverse(reverseList);
-                    postsAdapter.setPostsList(reverseList);
+                    int fromTo = 0;
+                    for (DataSnapshot data : dataSnapshot.getChildren()) {
+                        if (fromTo < lastPosts) {
+                            Post post = data.getValue(Post.class);
+                            post.setKey(data.getKey());
+                            morePosts.add(post);
+                            fromTo += 1;
+                        } else {
+                            break;
+                        }
+
+                    }
+                    Collections.reverse(morePosts);
+                    postsAdapter.setPostsList(morePosts);
                     loadingMoreDataProgressBar.setVisibility(View.INVISIBLE);
                 } else {
                     loadingMoreDataProgressBar.setVisibility(View.INVISIBLE);
                     Toast.makeText(MainActivity.this, "No more Posts", Toast.LENGTH_SHORT).show();
                 }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+    }
+
+    private void refreshForNewPosts(Query q) {
+        q.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                List<Post> morePosts = new ArrayList<>();
+                int first = 0;
+                for (DataSnapshot data : dataSnapshot.getChildren()) {
+                    Post post = data.getValue(Post.class);
+                    post.setKey(data.getKey());
+                    morePosts.add(post);
+                    first += 1;
+                }
+                Collections.reverse(morePosts);
+                postsAdapter.refreshPosts(morePosts);
+                mSwipeRefreshLayout.setRefreshing(false);
             }
 
             @Override
