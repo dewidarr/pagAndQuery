@@ -1,4 +1,4 @@
-package com.example.monko.foreach;
+package com.dewidar.foreach.foreach;
 
 import android.content.Context;
 import android.content.Intent;
@@ -12,7 +12,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.paging.PagedList;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -26,9 +25,6 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
-import com.shreyaspatil.firebase.recyclerpagination.DatabasePagingOptions;
-import com.shreyaspatil.firebase.recyclerpagination.FirebaseRecyclerPagingAdapter;
-import com.shreyaspatil.firebase.recyclerpagination.LoadingState;
 import com.squareup.picasso.Picasso;
 
 

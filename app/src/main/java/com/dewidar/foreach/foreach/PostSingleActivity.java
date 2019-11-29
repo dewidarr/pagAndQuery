@@ -1,4 +1,4 @@
-package com.example.monko.foreach;
+package com.dewidar.foreach.foreach;
 
 import android.content.Context;
 import android.content.Intent;

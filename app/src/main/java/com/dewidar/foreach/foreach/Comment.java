@@ -1,4 +1,4 @@
-package com.example.monko.foreach;
+package com.dewidar.foreach.foreach;
 
 /**
  * Created by amran on 4/24/2017.

@@ -1,9 +1,11 @@
-package com.example.monko.foreach;
+package com.dewidar.foreach.foreach;
 
 
 import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -27,7 +29,6 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -187,7 +188,7 @@ public class LoginActivity extends AppCompatActivity {
                     } else {
 
                         mProgress.dismiss();
-                        Toast.makeText(LoginActivity.this, "error login", Toast.LENGTH_LONG).show();
+                        Toast.makeText(LoginActivity.this, getString(R.string.error_login_email), Toast.LENGTH_LONG).show();
 
                     }
                 }
@@ -225,4 +226,8 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void onBackPressed() {
+        Log.i("onback","clicked");
+    }
 }

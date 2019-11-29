@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/colorBackground"
-    tools:context="com.example.monko.foreach.PostSingleActivity">
+    tools:context="com.dewidar.foreach.foreach.PostSingleActivity">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
@@ -60,7 +60,7 @@
         android:textColorHint="#9B9999"
         android:textColor="#ffffff"
         android:background="@drawable/border_for_edittext"
-        android:hint=" please add your reply"
+        android:hint="@string/please_add_reply"
         android:inputType="textMultiLine"
         android:textSize="18sp"
         android:layout_gravity="bottom"
@@ -71,7 +71,7 @@
         android:layout_width="65dp"
         android:layout_height="35dp"
         android:textAllCaps="false"
-        android:text="Delete"
+        android:text="@string/delete_post"
         android:textColor="#fff"
         android:background="@drawable/rounded_button_red"
         app:layout_anchor="@id/appBarLayout"

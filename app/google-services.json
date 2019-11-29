@@ -8,12 +8,65 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:634243942527:android:811f06b0f3da4cbbb6974a",
+        "android_client_info": {
+          "package_name": "com.dewidar.foreach"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "634243942527-5sf4e0g4715sqadb4scljel92obck723.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAV1njxjIs3jdO8SrHwULeTmLQjjG4L2WI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "634243942527-5sf4e0g4715sqadb4scljel92obck723.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:634243942527:android:21a6cfc94de2db3f",
         "android_client_info": {
           "package_name": "com.example.monko.foreach"
         }
       },
       "oauth_client": [
+        {
+          "client_id": "634243942527-c1a9na5hiruvnacst6f6g34csh7liv98.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.monko.foreach",
+            "certificate_hash": "270fb0feb19f3d2e5229034937f1bab1fccf5224"
+          }
+        },
+        {
+          "client_id": "634243942527-1abfmcjr463nc3uvq61dfre1bm461shu.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.monko.foreach",
+            "certificate_hash": "5270e1b8922d25554fb5d5133b36fb2a9202677a"
+          }
+        },
+        {
+          "client_id": "634243942527-dk1el83335qphrrufrv3kmfetlu8e33t.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.monko.foreach",
+            "certificate_hash": "0f87f46b36576b61baafeff2c1fb01d7069d5024"
+          }
+        },
         {
           "client_id": "634243942527-5hj96m1u387f1akmbm6g277nuhlelcrf.apps.googleusercontent.com",
           "client_type": 1,
@@ -33,20 +86,13 @@
         }
       ],
       "services": {
-        "analytics_service": {
-          "status": 1
-        },
         "appinvite_service": {
-          "status": 2,
           "other_platform_oauth_client": [
             {
               "client_id": "634243942527-5sf4e0g4715sqadb4scljel92obck723.apps.googleusercontent.com",
               "client_type": 3
             }
           ]
-        },
-        "ads_service": {
-          "status": 2
         }
       }
     }

@@ -5,13 +5,13 @@
 
     <item
         android:id="@+id/profileBtn"
-        android:title="Profile"
+        android:title="@string/profile_menu"
 
         app:showAsAction="never"/>
 
     <item
         android:id="@+id/logoutBtn"
-        android:title="Log Out"
+        android:title="@string/log_out"
         app:showAsAction="never"/>
 
     <item

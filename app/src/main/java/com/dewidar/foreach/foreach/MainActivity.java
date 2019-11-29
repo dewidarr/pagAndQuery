@@ -1,4 +1,4 @@
-package com.example.monko.foreach;
+package com.dewidar.foreach.foreach;
 
 import android.content.Context;
 import android.content.Intent;
@@ -20,6 +20,13 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.InterstitialAd;
+import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.initialization.InitializationStatus;
+import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -53,6 +60,10 @@ public class MainActivity extends AppCompatActivity {
     public static boolean upOrDown;
     private DatabaseReference commentRef;
 
+    private AdView mAdView;
+    private InterstitialAd mInterstitialAd;
+
+
     private int limit = 15;
     private int start = 0;
     //to know if reach the last data of database
@@ -66,7 +77,7 @@ public class MainActivity extends AppCompatActivity {
     public void logOut(View view) {
 
         mAuth.signOut();
-        // startActivity(new Intent(MainActivity.this, LoginActivity.class));
+        finish();
         Intent i = new Intent(MainActivity.this, LoginActivity.class);
         i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(i);
@@ -77,6 +88,28 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        MobileAds.initialize(this, new OnInitializationCompleteListener() {
+            @Override
+            public void onInitializationComplete(InitializationStatus initializationStatus) {
+            }
+        });
+
+        mAdView = findViewById(R.id.adView);
+        AdRequest adRequest = new AdRequest.Builder().build();
+//        mAdView.loadAd(adRequest);
+
+        mInterstitialAd = new InterstitialAd(this);
+        mInterstitialAd.setAdUnitId("ca-app-pub-1081849494088451/8566184685");
+//        mInterstitialAd.loadAd(new AdRequest.Builder().build());
+        mInterstitialAd.setAdListener(new AdListener() {
+            @Override
+            public void onAdClosed() {
+                // Load the next interstitial.
+                mInterstitialAd.loadAd(new AdRequest.Builder().build());
+            }
+
+        });
         loadingMoreDataProgressBar = findViewById(R.id.loading_moreData_progress);
         sharedpreferences = getSharedPreferences(mypreference,
                 Context.MODE_PRIVATE);
@@ -442,6 +475,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 Collections.reverse(postsList);
                 postsAdapter = new PostsAdapter(postsList);
+                postsAdapter.setAds(mInterstitialAd);
                 postsAdapter.setFloatingActionButton(floatingActionButton);
                 PostList.setAdapter(postsAdapter);
             }

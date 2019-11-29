@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Foreach</string>
+    <string name="textview">TextView</string>
+    <string name="enter_name">غيرالأسم </string>
+    <string name="set_date">اضف تاريخ الميلاد</string>
+    <string name="post_decription_goes_here">وصف المنشور يكون هنا</string>
+    <string name="comment">علق</string>
+    <string name="enter_email">البريد الإلكتروني</string>
+    <string name="enter_password">كلمه السر</string>
+    <string name="log_in">تسجيل الدخول</string>
+    <string name="go_to_signup">ليس لديك حساب؟ سجل هنا</string>
+    <string name="shar_post">شارك الموضوع مع أصدقائك</string>
+    <string name="please_add_reply">من فضلك أضف تعليقك</string>
+    <string name="delete_post">حذف</string>
+    <string name="user_profil_name">اسم</string>
+    <string name="confirm_password">تأكيد كلمة المرور</string>
+    <string name="creat_account">إنشاء حساب</string>
+    <string name="already_registerd">مسجل بالفعل؟ تسجيل الدخول هنا ...</string>
+    <string name="edit_profile">تعديل الملف الشخصي</string>
+    <string name="save_profile_changes">حفظ التغييرات </string>
+    <string name="profile_menu">الملف الشخصي</string>
+    <string name="log_out">خروج</string>
+    <string name="error_login_email">البريد الإلكتروني وكلمة المرور اللذين أدخلتهما غير متطابقين ، يرجى التحقق مرة أخرى والمحاولة مرة أخرى</string>
+</resources>

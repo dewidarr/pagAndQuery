@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@mipmap/bground"
-    tools:context="com.example.monko.foreach.RegisterActivity">
+    tools:context="com.dewidar.foreach.foreach.RegisterActivity">
 
     <EditText
         android:id="@+id/nameField"
@@ -15,7 +15,7 @@
         android:layout_alignBottom="@+id/mopilenumber"
         android:layout_alignStart="@+id/emailField"
         android:background="@drawable/rounded"
-        android:hint="Name"
+        android:hint="@string/user_profil_name"
         android:inputType="textPersonName"
         android:paddingBottom="10dp"
         android:paddingLeft="25dp"
@@ -31,7 +31,7 @@
         android:layout_alignStart="@+id/passwordField"
         android:layout_marginBottom="12dp"
         android:background="@drawable/rounded"
-        android:hint="Email Address"
+        android:hint="@string/enter_email"
         android:inputType="textEmailAddress"
         android:paddingBottom="10dp"
         android:paddingLeft="25dp"
@@ -47,7 +47,7 @@
         android:layout_alignStart="@+id/confirmpassword"
         android:layout_marginBottom="11dp"
         android:background="@drawable/rounded"
-        android:hint="Password"
+        android:hint="@string/enter_password"
         android:inputType="textPassword"
         android:paddingBottom="10dp"
         android:paddingLeft="25dp"
@@ -62,7 +62,7 @@
         android:layout_above="@+id/signInTxt"
         android:layout_centerHorizontal="true"
         android:background="@android:color/holo_blue_light"
-        android:text="CREAT ACCOUNT "
+        android:text="@string/creat_account"
         android:textColor="@color/cardview_light_background"
         tools:ignore="HardcodedText" />
 
@@ -73,7 +73,7 @@
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:padding="15dp"
-        android:text="Already registered ? Sign In Here ..."
+        android:text="@string/already_registerd"
         android:textAlignment="center"
         android:textColor="@color/common_google_signin_btn_text_dark_default"
         android:textSize="15sp"
@@ -115,7 +115,7 @@
         android:layout_alignStart="@+id/setdatebtn"
         android:layout_marginBottom="15dp"
         android:background="@drawable/rounded"
-        android:hint="Confirm Password"
+        android:hint="@string/confirm_password"
         android:inputType="textPassword"
         android:paddingBottom="10dp"
         android:paddingLeft="25dp"

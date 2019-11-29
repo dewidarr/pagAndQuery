@@ -1,4 +1,4 @@
-package com.example.monko.foreach;
+package com.dewidar.foreach.foreach;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
@@ -133,7 +133,7 @@ public class RegisterActivity extends FragmentActivity {
 
 
                             mProgress.dismiss();
-
+                            finish();
                             Intent mainIntent = new Intent(RegisterActivity.this, SetupActivity.class);
                             mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                             startActivity(mainIntent);

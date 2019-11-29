@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/colorBackground"
-    tools:context="com.example.monko.foreach.Profile_Activity">
+    tools:context="com.dewidar.foreach.foreach.Profile_Activity">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
@@ -50,6 +50,7 @@
         android:layout_gravity="bottom|end"
         android:layout_marginBottom="22dp"
         android:layout_marginRight="16dp"
+        android:layout_marginLeft="16dp"
         app:elevation="12dp"
         app:fabSize="normal" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

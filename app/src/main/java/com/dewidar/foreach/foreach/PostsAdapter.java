@@ -1,7 +1,6 @@
-package com.example.monko.foreach;
+package com.dewidar.foreach.foreach;
 
 import android.content.Intent;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,6 +11,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.gms.ads.InterstitialAd;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -21,8 +21,6 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.squareup.picasso.Picasso;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHolder> {
@@ -36,7 +34,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
     private FloatingActionButton floatingActionButton;
     private DatabaseReference commentRef = FirebaseDatabase.getInstance().getReference().child("Comment");
 
-
+    private InterstitialAd ads;
     int lastItemPosition = -1;
 
     public static class PostViewHolder extends RecyclerView.ViewHolder {
@@ -102,7 +100,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
             TextView post_comment = view.findViewById(R.id.comments_number);
             if (!number.equals("0")) {
                 post_comment.setText(number);
-            }else {
+            } else {
                 post_comment.setText("");
             }
         }
@@ -117,7 +115,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
             TextView post_like = view.findViewById(R.id.likesCount);
             if (!counter.equals("0")) {
                 post_like.setText(counter);
-            }else {
+            } else {
                 post_like.setText("");
             }
         }
@@ -210,11 +208,11 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
             });
 
 
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             Toast.makeText(viewHolder.view.getContext(), "This post Not available any more ):", Toast.LENGTH_SHORT).show();
         }
-       
+
         viewHolder.setCommentsNumber(String.valueOf(model.getCommentsNumber()));
         viewHolder.setDesc(model.getDesc());
         viewHolder.setDate(model.getDate());
@@ -228,13 +226,11 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
             @Override
             public void onClick(View v) {
                 //Toast.makeText(MainActivity.this,post_key,Toast.LENGTH_LONG).show();
-
                 Intent singlePostIntent = new Intent(viewHolder.view.getContext(), PostSingleActivity.class);
                 singlePostIntent.putExtra("Post_Id", post_key);
-
                 singlePostIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-
                 viewHolder.view.getContext().startActivity(singlePostIntent);
+                showAds();
             }
         });
 
@@ -250,7 +246,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
                         Intent.putExtra("user_id", use);
                         Intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                         viewHolder.view.getContext().startActivity(Intent);
-
+                        showAds();
                     }
 
                     @Override
@@ -324,7 +320,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
                     });
                 }
             });
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             Toast.makeText(viewHolder.view.getContext(), "This post Not available any more ):", Toast.LENGTH_SHORT).show();
         }
@@ -361,5 +357,19 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
 
     public void setFloatingActionButton(FloatingActionButton floatingActionButton) {
         this.floatingActionButton = floatingActionButton;
+    }
+
+    public void setAds(InterstitialAd ads) {
+        this.ads = ads;
+    }
+
+    private void showAds() {
+        try {
+            if (ads.isLoaded()) {
+                ads.show();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

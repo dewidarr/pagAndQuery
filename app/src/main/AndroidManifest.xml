@@ -1,14 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.example.monko.foreach">
-
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.INTERNET" />
+    package="com.dewidar.foreach.foreach">
 
     <application
-        android:name=".SimplePost"
+        android:name="com.dewidar.foreach.foreach.SimplePost"
         android:allowBackup="true"
         android:icon="@drawable/logo2"
         android:label="Foreach"
@@ -17,26 +13,41 @@
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning">
 
-        <activity android:name=".MainActivity" />
+        <activity android:name="com.dewidar.foreach.foreach.MainActivity" />
         <activity
             android:name="com.theartofdev.edmodo.cropper.CropImageActivity"
             android:theme="@style/Base.Theme.AppCompat" />
-        <activity android:name=".PostActivity" />
-        <activity android:name=".LoginActivity" android:theme="@style/Theme.AppCompat.NoActionBar"/>
-        <activity android:name=".SetupActivity" android:theme="@style/Theme.AppCompat.NoActionBar"/>
-        <activity android:name=".RegisterActivity" />
-        <activity android:name=".PostSingleActivity" android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
-        <activity android:name=".Profile_Activity"
-            android:theme="@style/ProfileTheme"
-            />
-        <activity android:name=".SplashActivity" android:theme="@style/Theme.AppCompat.NoActionBar">
+        <activity android:name="com.dewidar.foreach.foreach.PostActivity" />
+        <activity
+            android:name="com.dewidar.foreach.foreach.LoginActivity"
+            android:theme="@style/Theme.AppCompat.NoActionBar" />
+        <activity
+            android:name="com.dewidar.foreach.foreach.SetupActivity"
+            android:theme="@style/ProfileTheme" />
+        <activity android:name="com.dewidar.foreach.foreach.RegisterActivity" />
+        <activity
+            android:name="com.dewidar.foreach.foreach.PostSingleActivity"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+        <activity
+            android:name="com.dewidar.foreach.foreach.Profile_Activity"
+            android:theme="@style/ProfileTheme" />
+        <activity
+            android:name="com.dewidar.foreach.foreach.SplashActivity"
+            android:theme="@style/Theme.AppCompat.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".RoomsActivity" android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-1081849494088451~3627884473"/>
+
     </application>
+
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
 </manifest>

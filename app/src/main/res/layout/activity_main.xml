@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/colorBackground"
-    tools:context="com.example.monko.foreach.MainActivity">
+    tools:context="com.dewidar.foreach.foreach.MainActivity">
 
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/activity_main_swipe_refresh_layout"
@@ -33,9 +33,8 @@
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
         android:layout_alignParentBottom="true"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="22dp"
-        android:onClick="Go"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="30dp"
         android:src="@drawable/logo_transparent"
         app:backgroundTint="#1976d2"
         app:elevation="12dp"
@@ -49,4 +48,15 @@
         android:layout_alignParentEnd="true"
         android:visibility="invisible"
         />
+
+    <com.google.android.gms.ads.AdView
+        xmlns:ads="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/adView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentBottom="true"
+        ads:adSize="BANNER"
+        ads:adUnitId="ca-app-pub-1081849494088451/4080144767">
+    </com.google.android.gms.ads.AdView>
 </RelativeLayout>

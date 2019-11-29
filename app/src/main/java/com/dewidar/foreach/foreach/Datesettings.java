@@ -1,9 +1,8 @@
-package com.example.monko.foreach;
+package com.dewidar.foreach.foreach;
 
 import android.app.DatePickerDialog;
 import android.content.Context;
 import android.widget.DatePicker;
-import android.widget.Toast;
 
 
 public class Datesettings implements DatePickerDialog.OnDateSetListener {

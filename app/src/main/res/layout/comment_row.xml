@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/tools"
-    xmlns:app2="http://schemas.android.com/apk/res-auto"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:elevation="2dp"
     android:layout_margin="4dp"
-    app2:cardCornerRadius="8dp"
+    app:cardCornerRadius="8dp"
     android:background="@color/post_comment"
     >
 
@@ -27,9 +26,9 @@
         android:textColor="@color/colorTexts"
         android:textSize="20sp"
         android:textStyle="bold"
-        app2:layout_constraintStart_toEndOf="@+id/comImage"
-        app2:layout_constraintTop_toTopOf="parent"
-        app:ignore="HardcodedText" />
+        app:layout_constraintStart_toEndOf="@+id/comImage"
+        app:layout_constraintTop_toTopOf="parent"
+         />
 
     <TextView
         android:id="@+id/comComment"
@@ -41,9 +40,9 @@
         android:textColor="@color/colorTexts"
         android:textSize="16sp"
         android:textStyle="normal"
-        app2:layout_constraintEnd_toEndOf="parent"
-        app2:layout_constraintStart_toEndOf="@+id/comImage"
-        app2:layout_constraintTop_toBottomOf="@+id/comImage" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/comImage"
+        app:layout_constraintTop_toBottomOf="@+id/comImage" />
 
     <de.hdodenhof.circleimageview.CircleImageView
         android:id="@+id/comImage"
@@ -55,8 +54,8 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:src="@mipmap/default_image"
-        app2:layout_constraintStart_toStartOf="parent"
-        app2:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
         app:civ_border_color="#1976d2"
         app:civ_border_width="1dp" />
 
