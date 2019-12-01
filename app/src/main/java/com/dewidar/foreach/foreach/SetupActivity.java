@@ -7,24 +7,32 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.theartofdev.edmodo.cropper.CropImage;
 import com.theartofdev.edmodo.cropper.CropImageView;
+
+import java.lang.ref.WeakReference;
 
 public class SetupActivity extends AppCompatActivity {
     private ImageButton msetupimagebtn;
@@ -38,7 +46,7 @@ public class SetupActivity extends AppCompatActivity {
     private static final int GALLERY_REQUIST = 1;
     private static final int GALLERY = 1;
 
-    private FirebaseAuth mauth;
+    private final WeakReference<FirebaseAuth> mauth = new WeakReference<FirebaseAuth>(FirebaseAuth.getInstance());
     private DatabaseReference mdatabaseusers;
     private StorageReference msorageImage;
     private StorageReference mstorGroundImage;
@@ -52,33 +60,25 @@ public class SetupActivity extends AppCompatActivity {
     private Handler handler = new Handler();
     private Toolbar toolbar;
 
+    private static final String TAG = "SetupActivity";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_setup);
 
-        mauth = FirebaseAuth.getInstance();
         mdatabaseusers = FirebaseDatabase.getInstance().getReference().child("users");
         msorageImage = FirebaseStorage.getInstance().getReference().child("profile_images");
         mstorGroundImage = FirebaseStorage.getInstance().getReference().child("profile_ground");
         mprogressDialog = new ProgressDialog(this);
 
 
-        msetupimagebtn = (ImageButton) findViewById(R.id.setupimagebtn);
-        backgroundimagebtn = (ImageButton) findViewById(R.id.imagebackground);
+        msetupimagebtn = findViewById(R.id.setupimagebtn);
+        backgroundimagebtn = findViewById(R.id.imagebackground);
 
-        mNamefiled = (EditText) findViewById(R.id.setupNamefiled);
-        mSubmitbtn = (Button) findViewById(R.id.SetupSubmitbtn);
-//        backToprofile=(Button)findViewById(R.id.backprofile);
+        mNamefiled = findViewById(R.id.setupNamefiled);
+        mSubmitbtn = findViewById(R.id.SetupSubmitbtn);
 
-       /* backToprofile.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(SetupActivity.this, Profile_Activity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                startActivity(intent);
-            }
-        });*/
 
         mSubmitbtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -171,7 +171,7 @@ public class SetupActivity extends AppCompatActivity {
 
     private void startSetupAccount() {
         final String name = mNamefiled.getText().toString().trim();
-        final String user_id = mauth.getCurrentUser().getUid();
+        final String user_id = mauth.get().getCurrentUser().getUid();
         if (mimageUri != null || mimageGrounduri != null || !TextUtils.isEmpty(name)) {
 
             if (mimageUri != null && mimageGrounduri != null) {
@@ -186,25 +186,44 @@ public class SetupActivity extends AppCompatActivity {
             }
 
             if (mimageUri != null) {
+                /*
+                 * delete old profile picture
+                 * */
+
+                deleteOldImage("image");
+
+                /*
+                 * update the new selected profile picture py user
+                 * **/
                 final StorageReference filepath = msorageImage.child(mimageUri.getLastPathSegment());
                 filepath.putFile(mimageUri)
-                     .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                    @Override
-                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-
-                        filepath.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                        .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                             @Override
-                            public void onSuccess(Uri uri) {
-                                mdatabaseusers.child(user_id).child("image").setValue(uri.toString());
-                                profileImage = true;
+                            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+
+                                filepath.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                                    @Override
+                                    public void onSuccess(Uri uri) {
+                                        mdatabaseusers.child(user_id).child("image").setValue(uri.toString());
+                                        profileImage = true;
+                                        updatePostsOfThatUser(user_id,uri.toString());
+                                    }
+                                });
+
+
                             }
                         });
-
-
-                    }
-                });
             }
             if (mimageGrounduri != null) {
+                /*
+                 * delete old background image
+                 * */
+
+                deleteOldImage("ground");
+
+                /*
+                 * update the new background image selected by user
+                 * */
                 final StorageReference file = mstorGroundImage.child(mimageGrounduri.getLastPathSegment());
                 file.putFile(mimageGrounduri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                     @Override
@@ -228,10 +247,68 @@ public class SetupActivity extends AppCompatActivity {
         if (mimageUri == null && mimageGrounduri == null && TextUtils.isEmpty(name)) {
             Toast.makeText(this, "please upload your profile picture", Toast.LENGTH_SHORT).show();
             Intent intent = new Intent(SetupActivity.this, MainActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
         }
 
+    }
+
+    private void updatePostsOfThatUser(String user_id, final String image) {
+        final Query query = FirebaseDatabase.getInstance().getReference().child("Post").orderByChild("uid").equalTo(user_id);
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                query.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        try{
+
+                            if (dataSnapshot.exists()&& dataSnapshot.getValue() != null){
+                                for (DataSnapshot post : dataSnapshot.getChildren()){
+                                    FirebaseDatabase.getInstance().getReference().child("Post").child(post.getKey()).child("userimage").setValue(image);
+                                }
+                            }
+                        }catch (Exception e){
+                            e.printStackTrace();
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                    }
+                });
+
+            }
+        }).start();
+    }
+
+    private void deleteOldImage(String image) {
+        mdatabaseusers.child(mauth.get().getCurrentUser().getUid()).child(image).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if (dataSnapshot.getValue() != null && dataSnapshot.exists()) {
+                    try{
+                        StorageReference mStorage = FirebaseStorage.getInstance().getReferenceFromUrl(String.valueOf(dataSnapshot.getValue()));
+                        mStorage.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+                            @Override
+                            public void onSuccess(Void aVoid) {
+                                Log.i(TAG, "onSuccess: updated profile picture and removed old one from storage");
+                            }
+                        });
+                    }catch (Exception e){
+                        e.printStackTrace();
+                    }
+
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
     }
 
     private void waitUploadingFinish(final boolean singleImage, final boolean multibleImage) {
@@ -248,7 +325,6 @@ public class SetupActivity extends AppCompatActivity {
                                     mprogressDialog.dismiss();
                                     Toast.makeText(SetupActivity.this, "Profile Updated Successfully", Toast.LENGTH_SHORT).show();
                                     goToProfile();
-                                    finish();
                                 }
                             });
                         }
@@ -263,7 +339,6 @@ public class SetupActivity extends AppCompatActivity {
                                     mprogressDialog.dismiss();
                                     Toast.makeText(SetupActivity.this, "Profile Updated Successfully", Toast.LENGTH_SHORT).show();
                                     goToProfile();
-                                    finish();
                                 }
                             });
 
@@ -276,10 +351,10 @@ public class SetupActivity extends AppCompatActivity {
     }
 
     private void goToProfile() {
-        Intent intent = new Intent(SetupActivity.this, MainActivity.class);
-        intent.putExtra("user_id", mauth.getCurrentUser().getUid());
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        startActivity(intent);
+        Log.i(TAG, "goToProfile: chked");
+            Intent intent = new Intent(SetupActivity.this, MainActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
     }
 
 }

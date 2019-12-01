@@ -51,6 +51,8 @@ dependencies {
     implementation 'com.android.support:multidex:1.0.3'
 
     implementation 'com.google.android.gms:play-services-ads:18.3.0'
+    //leakCanary for any leak happen
+    debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.0'
 
 }
 

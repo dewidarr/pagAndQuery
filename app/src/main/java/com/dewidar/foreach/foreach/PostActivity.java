@@ -28,6 +28,7 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import java.lang.ref.WeakReference;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -43,7 +44,7 @@ public class PostActivity extends AppCompatActivity {
     private Uri mimageUri = null;
 
     private ProgressDialog mprogress;
-    private FirebaseAuth mAuth;
+    private final WeakReference<FirebaseAuth> mAuth = new WeakReference<FirebaseAuth>(FirebaseAuth.getInstance());
     private FirebaseUser mCurrentUser;
     private DatabaseReference mDataBaseUser;
     private long numberOfPosts = 0;
@@ -54,8 +55,7 @@ public class PostActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_post);
 
-        mAuth = FirebaseAuth.getInstance();
-        mCurrentUser = mAuth.getCurrentUser();
+        mCurrentUser = mAuth.get().getCurrentUser();
 
 
         //progressDialoge
@@ -65,9 +65,9 @@ public class PostActivity extends AppCompatActivity {
         mDataBase = FirebaseDatabase.getInstance().getReference().child("Post");
         mDataBaseUser = FirebaseDatabase.getInstance().getReference().child("users").child(mCurrentUser.getUid());
 //-------------
-        mSelectImage = (ImageButton) findViewById(R.id.imageSelect);
-        mSubmitBtn = (Button) findViewById(R.id.submitBtn);
-        mPostdesc = (EditText) findViewById(R.id.desc);
+        mSelectImage =  findViewById(R.id.imageSelect);
+        mSubmitBtn =  findViewById(R.id.submitBtn);
+        mPostdesc =  findViewById(R.id.desc);
 
 //gallery intent call
         mSelectImage.setOnClickListener(new View.OnClickListener() {
@@ -145,8 +145,9 @@ public class PostActivity extends AppCompatActivity {
                                         public void onComplete(@NonNull Task<Void> task) {
 
                                             if (task.isSuccessful()) {
-                                                finish();
-                                                startActivity(new Intent(PostActivity.this, MainActivity.class));
+                                                Intent intent = new Intent(PostActivity.this,MainActivity.class);
+                                                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                                startActivity(intent);
                                             } else {
                                                 Toast.makeText(getApplicationContext(), "please check your internet", Toast.LENGTH_LONG);
 
@@ -160,7 +161,6 @@ public class PostActivity extends AppCompatActivity {
 
                                             if (task.isSuccessful()) {
 
-//                                                startActivity(new Intent(PostActivity.this, MainActivity.class));
                                             } else {
                                                 Toast.makeText(getApplicationContext(), "please upload an profile picture", Toast.LENGTH_LONG);
 

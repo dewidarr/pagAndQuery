@@ -36,6 +36,8 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.lang.ref.WeakReference;
+
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -44,7 +46,7 @@ public class LoginActivity extends AppCompatActivity {
     private EditText passwordfiled;
     private TextView regis;
     private SignInButton mGooglebtn;
-    private FirebaseAuth mAuth;
+    private final WeakReference<FirebaseAuth> mAuth = new WeakReference<FirebaseAuth>(FirebaseAuth.getInstance());
     private DatabaseReference mDatabaseUsers;
     private ProgressDialog mProgress;
     private final static int RC_SIGN_IN = 1;
@@ -56,7 +58,6 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        mAuth = FirebaseAuth.getInstance();
         mDatabaseUsers = FirebaseDatabase.getInstance().getReference().child("users");
         mDatabaseUsers.keepSynced(true);
         emailfiled = (EditText) findViewById(R.id.loginemailfield);
@@ -144,7 +145,7 @@ public class LoginActivity extends AppCompatActivity {
         Log.d(TAG, "firebaseAuthWithGoogle:" + acct.getId());
 
         AuthCredential credential = GoogleAuthProvider.getCredential(acct.getIdToken(), null);
-        mAuth.signInWithCredential(credential)
+        mAuth.get().signInWithCredential(credential)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
@@ -177,7 +178,7 @@ public class LoginActivity extends AppCompatActivity {
             mProgress.setMessage("Signing in....");
             mProgress.show();
 
-            mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+            mAuth.get().signInWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
                 @Override
                 public void onComplete(@NonNull Task<AuthResult> task) {
                     if (task.isSuccessful()) {
@@ -198,8 +199,8 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void checksUserExist() {
-        if (mAuth.getCurrentUser() != null) {
-            final String user_id = mAuth.getCurrentUser().getUid();
+        if (mAuth.get().getCurrentUser() != null) {
+            final String user_id = mAuth.get().getCurrentUser().getUid();
 
             mDatabaseUsers.addValueEventListener(new ValueEventListener() {
                 @Override

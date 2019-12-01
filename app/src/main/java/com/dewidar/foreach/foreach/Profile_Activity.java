@@ -27,15 +27,15 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.squareup.picasso.Picasso;
 
+import java.lang.ref.WeakReference;
+
 
 public class Profile_Activity extends MainActivity {
 
     private ImageView profileimage;
     private ImageView groundimage;
     private Button Gosetup;
-    private Button GoMain;
     private TextView username;
-    private FirebaseAuth mauthh;
     private DatabaseReference mdatabseusers;
     //***********************************
     private DatabaseReference Database;
@@ -44,7 +44,6 @@ public class Profile_Activity extends MainActivity {
     private DatabaseReference mDatabaseCurrentUser;
     private DatabaseReference mDatabaseCounterLike;
     private Query mQueryCurrentUser;
-    private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthStateListener;
     private boolean mProcessLike = false;
     private int counter;
@@ -52,13 +51,16 @@ public class Profile_Activity extends MainActivity {
     private FloatingActionButton floatingActionButton;
 
     private FirebaseRecyclerAdapter<Post, PostViewHolder> firebaseRecyclerAdapter;
+    private final WeakReference<FirebaseAuth> mauthh = new WeakReference<FirebaseAuth>(FirebaseAuth.getInstance());
+    ;
+    private ValueEventListener mDatabaseLikeValueEventListener;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile_);
 
-        mAuth = FirebaseAuth.getInstance();
 
         mAuthStateListener = new FirebaseAuth.AuthStateListener() {
             @Override
@@ -76,17 +78,16 @@ public class Profile_Activity extends MainActivity {
 
         Gosetup = (Button) findViewById(R.id.gosetup);
 
-        mauthh = FirebaseAuth.getInstance();
         String user_id = getIntent().getExtras().get("user_id").toString();
-        if (mAuth.getCurrentUser().getUid().equals(user_id)) {
+        if (mauthh.get().getCurrentUser().getUid().equals(user_id)) {
 
             Gosetup.setVisibility(View.VISIBLE);
 
         }
 
-        profileimage = (ImageView) findViewById(R.id.imageprofilepic);
-        groundimage = (ImageView) findViewById(R.id.imageground);
-        username = (TextView) findViewById(R.id.textNameprof);
+        profileimage = findViewById(R.id.imageprofilepic);
+        groundimage = findViewById(R.id.imageground);
+        username = findViewById(R.id.textNameprof);
         floatingActionButton = findViewById(R.id.profile_floating_action_button);
 
         floatingActionButton.setOnClickListener(new View.OnClickListener() {
@@ -98,7 +99,6 @@ public class Profile_Activity extends MainActivity {
             }
         });
 
-//        GoMain=(Button)findViewById(R.id.button4);
 
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference();
 
@@ -155,10 +155,6 @@ public class Profile_Activity extends MainActivity {
         });
 
 
-
-        mAuth = FirebaseAuth.getInstance();
-
-
         Database = FirebaseDatabase.getInstance().getReference().child("Post");
         mDatabaseUsers = FirebaseDatabase.getInstance().getReference().child("users");
         mDatabaseLike = FirebaseDatabase.getInstance().getReference().child("Like");
@@ -186,7 +182,7 @@ public class Profile_Activity extends MainActivity {
     protected void onStart() {
         super.onStart();
 
-        mAuth.addAuthStateListener(mAuthStateListener);
+        mauthh.get().addAuthStateListener(mAuthStateListener);
         firebaseRecyclerAdapter.startListening();
         PostList.setAdapter(firebaseRecyclerAdapter);
     }
@@ -194,16 +190,21 @@ public class Profile_Activity extends MainActivity {
     @Override
     protected void onStop() {
         super.onStop();
-        firebaseRecyclerAdapter.stopListening();
+        try {
+            firebaseRecyclerAdapter.stopListening();
+            mDatabaseLike.removeEventListener(mDatabaseLikeValueEventListener);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public static class PostViewHolder extends RecyclerView.ViewHolder {
 
-        View view;
-        ImageView mlikeBtn;
-        DatabaseReference mDatabaseLike;
-        DatabaseReference Database;
-        FirebaseAuth mAuth;
+        private View view;
+        private ImageView mlikeBtn;
+        private DatabaseReference Database;
+        private DatabaseReference mDatabaseLikeViewHolder;
+        private final WeakReference<FirebaseAuth> mAuth;
 
 
         public PostViewHolder(View itemView) {
@@ -211,23 +212,24 @@ public class Profile_Activity extends MainActivity {
 
             view = itemView;
             mlikeBtn = (ImageView) view.findViewById(R.id.like_btn);
-            mDatabaseLike = FirebaseDatabase.getInstance().getReference().child("Like");
+            mDatabaseLikeViewHolder = FirebaseDatabase.getInstance().getReference().child("Like");
             Database = FirebaseDatabase.getInstance().getReference().child("Post");
-            mAuth = FirebaseAuth.getInstance();
-            mDatabaseLike.keepSynced(true);
+            mAuth = new WeakReference<FirebaseAuth>(FirebaseAuth.getInstance());
+            mDatabaseLikeViewHolder.keepSynced(true);
 
         }
 
 
         public void setLikeBtn(final String post_key) {
 
-            mDatabaseLike.addValueEventListener(new ValueEventListener() {
+
+            mDatabaseLikeViewHolder.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
 
-                    if (mAuth.getCurrentUser() != null) {
+                    if (mAuth.get().getCurrentUser() != null) {
 
-                        if (dataSnapshot.child(post_key).hasChild(mAuth.getCurrentUser().getUid())) {
+                        if (dataSnapshot.child(post_key).hasChild(mAuth.get().getCurrentUser().getUid())) {
 
                             mlikeBtn.setImageResource(R.drawable.favorit);
 
@@ -236,6 +238,8 @@ public class Profile_Activity extends MainActivity {
                             mlikeBtn.setImageResource(R.drawable.unfav);
 
                         }
+
+                        mDatabaseLikeViewHolder.removeEventListener(this);
                     }
                 }
 
@@ -248,16 +252,19 @@ public class Profile_Activity extends MainActivity {
 
         }
 
+
         public void setDesc(String desc) {
 
             TextView post_desc = (TextView) view.findViewById(R.id.post_desc);
             post_desc.setText(desc);
         }
+
         public void setDate(String date) {
 
             TextView post_date = (TextView) view.findViewById(R.id.textDate);
             post_date.setText(date);
         }
+
         public void setCounter(String counter) {
 
             TextView post_like = (TextView) view.findViewById(R.id.likesCount);
@@ -312,11 +319,11 @@ public class Profile_Activity extends MainActivity {
                 new FirebaseRecyclerOptions.Builder<Post>()
                         .setQuery(query, Post.class)
                         .build();
-         firebaseRecyclerAdapter = new FirebaseRecyclerAdapter<Post, PostViewHolder>(options) {
+        firebaseRecyclerAdapter = new FirebaseRecyclerAdapter<Post, PostViewHolder>(options) {
             @NonNull
             @Override
             public PostViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-                View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.post_row,parent,false);
+                View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.post_row, parent, false);
                 return new PostViewHolder(view);
             }
 
@@ -377,20 +384,20 @@ public class Profile_Activity extends MainActivity {
                             }
                         });
 
-                        mDatabaseLike.addValueEventListener(new ValueEventListener() {
+                        mDatabaseLikeValueEventListener = new ValueEventListener() {
 
                             @Override
                             public void onDataChange(DataSnapshot dataSnapshot) {
 
                                 if (mProcessLike) {
 
-                                    if (dataSnapshot.child(post_key).hasChild(mauthh.getCurrentUser().getUid())) {
+                                    if (dataSnapshot.child(post_key).hasChild(mauthh.get().getCurrentUser().getUid())) {
 
                                         counter--;
                                         //viewHolder.setLikesCount(counter);
                                         Database.child(post_key).child("likes").setValue(counter);
 
-                                        mDatabaseLike.child(post_key).child(mAuth.getCurrentUser().getUid()).removeValue();
+                                        mDatabaseLike.child(post_key).child(mauthh.get().getCurrentUser().getUid()).removeValue();
 
                                         mProcessLike = false;
 
@@ -401,7 +408,7 @@ public class Profile_Activity extends MainActivity {
 
                                         Database.child(post_key).child("likes").setValue(counter);
 
-                                        mDatabaseLike.child(post_key).child(mAuth.getCurrentUser().getUid()).setValue("random value");
+                                        mDatabaseLike.child(post_key).child(mauthh.get().getCurrentUser().getUid()).setValue("random value");
 
                                         mProcessLike = false;
                                     }
@@ -415,7 +422,9 @@ public class Profile_Activity extends MainActivity {
 
                             }
 
-                        });
+                        };
+
+                        mDatabaseLike.addValueEventListener(mDatabaseLikeValueEventListener);
                     }
                 });
 

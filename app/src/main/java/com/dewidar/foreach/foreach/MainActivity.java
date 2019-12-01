@@ -8,9 +8,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ImageView;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -35,8 +33,8 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
-import com.squareup.picasso.Picasso;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -45,11 +43,12 @@ public class MainActivity extends AppCompatActivity {
 
     private RecyclerView PostList;
     private LinearLayoutManager mLayoutManager;
+    static boolean active = false;
 
     private DatabaseReference Database;
     private DatabaseReference mDatabaseUsers;
     private DatabaseReference mDatabaseLike;
-    private FirebaseAuth mAuth;
+    //    private static FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthStateListener;
     public final String mypreference = "mypref";
     private SharedPreferences sharedpreferences;
@@ -62,6 +61,11 @@ public class MainActivity extends AppCompatActivity {
 
     private AdView mAdView;
     private InterstitialAd mInterstitialAd;
+    private final WeakReference<FirebaseAuth> mAuth = new WeakReference<FirebaseAuth>(FirebaseAuth.getInstance());
+    ;
+    private final WeakReference<MainActivity> mainActivityWeakReference = new WeakReference<MainActivity>(MainActivity.this);
+    ;
+    private ValueEventListener mDatabaseUsersValueEventListener;
 
 
     private int limit = 15;
@@ -73,16 +77,6 @@ public class MainActivity extends AppCompatActivity {
 
     private FloatingActionButton floatingActionButton;
 
-
-    public void logOut(View view) {
-
-        mAuth.signOut();
-        finish();
-        Intent i = new Intent(MainActivity.this, LoginActivity.class);
-        i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        startActivity(i);
-
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -130,15 +124,19 @@ public class MainActivity extends AppCompatActivity {
                             Query query
                                     = Database.limitToLast((int) (dataSnapshot.getChildrenCount() - numOfPosts));
                             refreshForNewPosts(query);
-                        } else {
-                            Toast.makeText(MainActivity.this, "no more posts yet ):", Toast.LENGTH_SHORT).show();
+                            numOfPosts = (int) dataSnapshot.getChildrenCount();
+                        } else if (numOfPosts != 0 && dataSnapshot.getChildrenCount() < numOfPosts){
+                            Intent intent = getIntent();
+                            finish();
+                            startActivity(intent);
+                        }else {
+                            Toast.makeText(mainActivityWeakReference.get(), "no more posts yet ):", Toast.LENGTH_SHORT).show();
                             mSwipeRefreshLayout.setRefreshing(false);
                         }
                     }
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError databaseError) {
-
                     }
                 });
 
@@ -176,7 +174,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 if (upOrDown) {
-                    Intent In = new Intent(MainActivity.this, PostActivity.class);
+                    Intent In = new Intent(mainActivityWeakReference.get(), PostActivity.class);
                     In.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                     startActivity(In);
                 } else if (!upOrDown) {
@@ -187,7 +185,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void prepareDatabase() {
-        mAuth = FirebaseAuth.getInstance();
 
         mAuthStateListener = new FirebaseAuth.AuthStateListener() {
             @Override
@@ -195,7 +192,7 @@ public class MainActivity extends AppCompatActivity {
 
                 if (firebaseAuth.getCurrentUser() == null) {
 
-                    Intent loginIntent = new Intent(MainActivity.this, LoginActivity.class);
+                    Intent loginIntent = new Intent(mainActivityWeakReference.get(), LoginActivity.class);
                     loginIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                     startActivity(loginIntent);
                 }
@@ -214,7 +211,7 @@ public class MainActivity extends AppCompatActivity {
 
         PostList = (RecyclerView) findViewById(R.id.post_list);
         PostList.setHasFixedSize(true);
-        mLayoutManager = new LinearLayoutManager(MainActivity.this);
+        mLayoutManager = new LinearLayoutManager(mainActivityWeakReference.get());
 
 
         PostList.setLayoutManager(mLayoutManager);
@@ -254,29 +251,36 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
+        active= true;
         checksUserExist();
-        mAuth.addAuthStateListener(mAuthStateListener);
+        mAuth.get().addAuthStateListener(mAuthStateListener);
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-//        firebaseRecyclerAdapterOptions.stopListening();
+        active =false;
+        try {
+            mAuth.get().removeAuthStateListener(mAuthStateListener);
+            mDatabaseUsers.removeEventListener(mDatabaseUsersValueEventListener);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void checksUserExist() {
 
 
-        if (mAuth.getCurrentUser() != null) {
+        if (mAuth.get().getCurrentUser() != null) {
 
-            final String user_id = mAuth.getCurrentUser().getUid();
-
-            mDatabaseUsers.addValueEventListener(new ValueEventListener() {
+            final String user_id = mAuth.get().getCurrentUser().getUid();
+            mDatabaseUsersValueEventListener = new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
                     if (!dataSnapshot.hasChild(user_id)) {
 
-                        Intent setupIntent = new Intent(MainActivity.this, SetupActivity.class);
+                        Intent setupIntent = new Intent(mainActivityWeakReference.get(), SetupActivity.class);
                         setupIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                         startActivity(setupIntent);
                     }
@@ -286,120 +290,10 @@ public class MainActivity extends AppCompatActivity {
                 public void onCancelled(DatabaseError databaseError) {
 
                 }
-            });
+            };
 
-        }
-    }
+            mDatabaseUsers.addValueEventListener(mDatabaseUsersValueEventListener);
 
-
-    public static class PostViewHolder extends RecyclerView.ViewHolder {
-
-        View view;
-        ImageView mlikeBtn;
-        ImageView mUserImage;
-        DatabaseReference mDatabaseLike;
-        DatabaseReference Database;
-        FirebaseAuth mAuth;
-
-
-        public PostViewHolder(View itemView) {
-            super(itemView);
-
-            view = itemView;
-            mlikeBtn = (ImageView) view.findViewById(R.id.like_btn);
-
-            mUserImage = (ImageView) view.findViewById(R.id.user_Image);
-
-            mDatabaseLike = FirebaseDatabase.getInstance().getReference().child("Like");
-            Database = FirebaseDatabase.getInstance().getReference().child("Post");
-            mAuth = FirebaseAuth.getInstance();
-            mDatabaseLike.keepSynced(true);
-        }
-
-
-        public void setLikeBtn(final String post_key) {
-
-            mDatabaseLike.addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-
-                    if (mAuth.getCurrentUser() != null) {
-
-                        if (dataSnapshot.child(post_key).hasChild(mAuth.getCurrentUser().getUid())) {
-
-                            mlikeBtn.setImageResource(R.drawable.favorit);
-
-                        } else {
-
-                            mlikeBtn.setImageResource(R.drawable.unfav);
-
-                        }
-                    }
-                }
-
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
-
-                }
-            });
-
-        }
-
-        public void setDesc(String desc) {
-
-            TextView post_desc = (TextView) view.findViewById(R.id.post_desc);
-            post_desc.setText(desc);
-        }
-
-        public void setDate(String date) {
-
-            TextView post_date = (TextView) view.findViewById(R.id.textDate);
-            post_date.setText(date);
-        }
-
-        public void setCounter(String counter) {
-
-            TextView post_like = (TextView) view.findViewById(R.id.likesCount);
-            post_like.setText(counter);
-        }
-
-        public void setUsername(String username) {
-
-            TextView post_username = (TextView) view.findViewById(R.id.post_username);
-            post_username.setText(username);
-
-        }
-
-        public void setImage(final Context context, final String image) {
-
-
-            final ImageView post_image = (ImageView) view.findViewById(R.id.post_image);
-            Picasso.get().load(image).into(post_image);
-
-
-        }
-
-        public void setUserImage(final Context c, String post_key) {
-
-            DatabaseReference ref = FirebaseDatabase.getInstance().getReference();
-
-            DatabaseReference s = ref.child("Post").child(post_key).child("userimage");
-            s.addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    final String imagee = dataSnapshot.getValue(String.class);
-
-                    final ImageView post_userImage = (ImageView) view.findViewById(R.id.user_Image);
-
-                    Picasso.get().load(imagee).into(post_userImage);
-
-                }
-
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
-
-                }
-            });
         }
     }
 
@@ -410,21 +304,20 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
-
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
         if (item.getItemId() == R.id.profileBtn) {
 
-            Intent intent = new Intent(MainActivity.this, Profile_Activity.class);
-            intent.putExtra("user_id", mAuth.getCurrentUser().getUid());
+            Intent intent = new Intent(mainActivityWeakReference.get(), Profile_Activity.class);
+            intent.putExtra("user_id", mAuth.get().getCurrentUser().getUid());
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
 
         } else if (item.getItemId() == R.id.logoutBtn) {
 
-            mAuth.signOut();
-            Intent i = new Intent(MainActivity.this, LoginActivity.class);
+            mAuth.get().signOut();
+            Intent i = new Intent(mainActivityWeakReference.get(), LoginActivity.class);
             i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(i);
 
@@ -463,7 +356,7 @@ public class MainActivity extends AppCompatActivity {
         finish();
     }
 
-    private void loadPostsPagination(Query query) {
+    private void loadPostsPagination(final Query query) {
 
         query.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -478,17 +371,19 @@ public class MainActivity extends AppCompatActivity {
                 postsAdapter.setAds(mInterstitialAd);
                 postsAdapter.setFloatingActionButton(floatingActionButton);
                 PostList.setAdapter(postsAdapter);
+                query.removeEventListener(this);
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
+                query.removeEventListener(this);
 
             }
         });
 
     }
 
-    private void loadMorPosts(Query query, final int start, final long allPostsCount) {
+    private void loadMorPosts(final Query query, final int start, final long allPostsCount) {
 
         query.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -518,20 +413,22 @@ public class MainActivity extends AppCompatActivity {
                     Collections.reverse(morePosts);
                     postsAdapter.setPostsList(morePosts);
                     loadingMoreDataProgressBar.setVisibility(View.INVISIBLE);
+                    query.removeEventListener(this);
                 } else {
                     loadingMoreDataProgressBar.setVisibility(View.INVISIBLE);
-                    Toast.makeText(MainActivity.this, "No more Posts", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(mainActivityWeakReference.get(), "No more Posts", Toast.LENGTH_SHORT).show();
+                    query.removeEventListener(this);
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
-
+                query.removeEventListener(this);
             }
         });
     }
 
-    private void refreshForNewPosts(Query q) {
+    private void refreshForNewPosts(final Query q) {
         q.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -546,13 +443,16 @@ public class MainActivity extends AppCompatActivity {
                 Collections.reverse(morePosts);
                 postsAdapter.refreshPosts(morePosts);
                 mSwipeRefreshLayout.setRefreshing(false);
+                q.removeEventListener(this);
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
+                q.removeEventListener(this);
 
             }
         });
     }
+
 }
 

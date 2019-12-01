@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,6 +22,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.firebase.ui.database.FirebaseRecyclerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -30,11 +33,14 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 import com.squareup.picasso.Picasso;
+
+import java.lang.ref.WeakReference;
 
 public class PostSingleActivity extends AppCompatActivity {
 
-    private Button push;
     private EditText writeComment;
 
     private RecyclerView commentList;
@@ -47,15 +53,20 @@ public class PostSingleActivity extends AppCompatActivity {
     private FirebaseUser mCurrentUser;
     private DatabaseReference mDataBaseUser;
     private DatabaseReference mDatabaseCom;
+    private StorageReference mStorage;
+
+    private static final String TAG = "PostSingleActivity";
 
 
-    private FirebaseAuth mAuth;
+    private WeakReference<FirebaseAuth> mAuth = new WeakReference<FirebaseAuth>(FirebaseAuth.getInstance());
     private FirebaseAuth.AuthStateListener mAuthStateListener;
 
     private ImageView mPostSingleImage;
     private TextView mPostSingleDesc;
-    private Button mPostRemoveBtn;
+    private Button mPostRemoveBtn, push;
     String comment_key = "";
+
+    private String postImageUrl;
 
     private FirebaseRecyclerAdapter<Comment, commentViewHolder> firebaseRecyclerAdapter;
 
@@ -66,15 +77,15 @@ public class PostSingleActivity extends AppCompatActivity {
         setContentView(R.layout.activity_post_single);
 
         mPost_key = getIntent().getExtras().getString("Post_Id");
-        mAuth = FirebaseAuth.getInstance();
+
         mAuthStateListener = new FirebaseAuth.AuthStateListener() {
             @Override
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
 
             }
         };
-        if (mAuth.getCurrentUser() != null) {
-            mCurrentUser = mAuth.getCurrentUser();
+        if (mAuth.get().getCurrentUser() != null) {
+            mCurrentUser = mAuth.get().getCurrentUser();
 
 
             push = (Button) findViewById(R.id.pushComment);
@@ -110,22 +121,24 @@ public class PostSingleActivity extends AppCompatActivity {
 
         //Toast.makeText(getApplicationContext() , post_key , Toast.LENGTH_LONG).show();
 
-        Database.child(mPost_key).addValueEventListener(new ValueEventListener() {
+        Database.child(mPost_key).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
 
-                String post_image = (String) dataSnapshot.child("image").getValue();
+                postImageUrl = (String) dataSnapshot.child("image").getValue();
                 String post_desc = (String) dataSnapshot.child("desc").getValue();
                 String post_uid = (String) dataSnapshot.child("uid").getValue();
 
                 mPostSingleDesc.setText(post_desc);
 
-                Picasso.get().load(post_image).into(mPostSingleImage);
-                if (mAuth.getCurrentUser().getUid().equals(post_uid)) {
+                Picasso.get().load(postImageUrl).into(mPostSingleImage);
+                if (mAuth.get().getCurrentUser().getUid().equals(post_uid)) {
 
                     mPostRemoveBtn.setVisibility(View.VISIBLE);
 
                 }
+
+                Database.removeEventListener(this);
             }
 
             @Override
@@ -142,9 +155,21 @@ public class PostSingleActivity extends AppCompatActivity {
                 Database.child(mPost_key).removeValue();
                 mDatabaseLike.child(mPost_key).removeValue();
                 mDatabaseComment.child(mPost_key).removeValue();
+                mStorage = FirebaseStorage.getInstance().getReferenceFromUrl(postImageUrl);
+                mStorage.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        Toast.makeText(PostSingleActivity.this, "Deleted", Toast.LENGTH_SHORT).show();
+                    }
+                }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.i(TAG, "onFailure: cant delete post");
+                    }
+                });
 
                 Intent mainIntent = new Intent(PostSingleActivity.this, MainActivity.class);
-
+                mainIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 startActivity(mainIntent);
             }
         });
@@ -154,18 +179,20 @@ public class PostSingleActivity extends AppCompatActivity {
     }
 
     private void createComment() {
-        //update comments counter in child "post"
+        /*
+         * update comments counter in child "post"
+         *
+         * */
         Query query = Database.child(mPost_key).child("commentsNumber");
         query.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-             if (dataSnapshot.getValue() != null){
-                 int num = dataSnapshot.getValue(Integer.class);
-                 Database.child(mPost_key).child("commentsNumber").setValue(num +1);
-             }
-             else {
-                 Database.child(mPost_key).child("commentsNumber").setValue(1);
-             }
+                if (dataSnapshot.getValue() != null) {
+                    int num = dataSnapshot.getValue(Integer.class);
+                    Database.child(mPost_key).child("commentsNumber").setValue(num + 1);
+                } else {
+                    Database.child(mPost_key).child("commentsNumber").setValue(1);
+                }
 
             }
 
@@ -174,12 +201,13 @@ public class PostSingleActivity extends AppCompatActivity {
 
             }
         });
+
+
         final String comment = writeComment.getText().toString().trim();
         if (!TextUtils.isEmpty(comment)) {
 
             final DatabaseReference newComment = mDatabaseCom.push();
-
-            mDataBaseUser.addValueEventListener(new ValueEventListener() {
+            mDataBaseUser.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
 
@@ -198,19 +226,7 @@ public class PostSingleActivity extends AppCompatActivity {
 
                         }
                     });
-                    newComment.child("userimage").setValue(dataSnapshot.child("image").getValue()).addOnCompleteListener(new OnCompleteListener<Void>() {
-                        @Override
-                        public void onComplete(@NonNull Task<Void> task) {
 
-                            if (task.isSuccessful()) {
-                                writeComment.setText("");
-                            } else {
-                                Toast.makeText(getApplicationContext(), "sorry try again later", Toast.LENGTH_LONG);
-
-                            }
-
-                        }
-                    });
                 }
 
                 @Override
@@ -225,7 +241,7 @@ public class PostSingleActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        mAuth.addAuthStateListener(mAuthStateListener);
+        mAuth.get().addAuthStateListener(mAuthStateListener);
 
         firebaseRecyclerAdapter.startListening();
         commentList.setAdapter(firebaseRecyclerAdapter);
@@ -302,17 +318,33 @@ public class PostSingleActivity extends AppCompatActivity {
 
         public void setUserImage(final Context c, String comment_key, String post_key) {
 
-            DatabaseReference ref = FirebaseDatabase.getInstance().getReference();
+            final DatabaseReference ref = FirebaseDatabase.getInstance().getReference();
 
-            DatabaseReference s = ref.child("Comment").child(post_key).child(comment_key).child("userimage");
+            DatabaseReference s = ref.child("Comment").child(post_key).child(comment_key).child("uid");
             s.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
-                    final String imagee = dataSnapshot.getValue(String.class);
 
-                    final ImageView comment_userImage = (ImageView) view.findViewById(R.id.comImage);
+                    if (dataSnapshot.getValue() != null) {
+                        DatabaseReference profileRef = ref.child("users").child(String.valueOf(dataSnapshot.getValue())).child("image");
+                        profileRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                if (dataSnapshot.getValue() != null) {
+                                    final ImageView comment_userImage = view.findViewById(R.id.comImage);
 
-                    Picasso.get().load(imagee).into(comment_userImage);
+                                    Picasso.get().load(dataSnapshot.getValue(String.class)).into(comment_userImage);
+                                }
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                            }
+                        });
+                    }
+
+
                 }
 
                 @Override

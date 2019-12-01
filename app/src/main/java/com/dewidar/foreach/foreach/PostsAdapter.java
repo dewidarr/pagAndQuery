@@ -21,6 +21,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.squareup.picasso.Picasso;
 
+import java.lang.ref.WeakReference;
 import java.util.List;
 
 public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHolder> {
@@ -30,9 +31,10 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
     private int counter;
     private boolean mProcessLike = false;
     private DatabaseReference mDatabaseLike = FirebaseDatabase.getInstance().getReference().child("Like");
-    private FirebaseAuth mAuth = FirebaseAuth.getInstance();
+    private WeakReference<FirebaseAuth> mAuth = new WeakReference<FirebaseAuth>(FirebaseAuth.getInstance());
     private FloatingActionButton floatingActionButton;
-    private DatabaseReference commentRef = FirebaseDatabase.getInstance().getReference().child("Comment");
+    private boolean isPostExist = true;
+
 
     private InterstitialAd ads;
     int lastItemPosition = -1;
@@ -64,7 +66,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
 
         public void setLikeBtn(final String post_key) {
 
-            mDatabaseLike.addValueEventListener(new ValueEventListener() {
+            mDatabaseLike.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
 
@@ -79,6 +81,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
                             mlikeBtn.setImageResource(R.drawable.unfav);
 
                         }
+                        mDatabaseLike.removeEventListener(this);
                     }
                 }
 
@@ -128,9 +131,8 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
         }
 
         public void setImage(final String image) {
-
-
             final ImageView post_image = view.findViewById(R.id.post_image);
+
             Picasso.get().load(image).into(post_image);
 
 
@@ -140,7 +142,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
 
             DatabaseReference ref = FirebaseDatabase.getInstance().getReference();
 
-            DatabaseReference s = ref.child("Post").child(post_key).child("userimage");
+            final DatabaseReference s = ref.child("Post").child(post_key).child("userimage");
             s.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
@@ -149,7 +151,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
                     final ImageView post_userImage = view.findViewById(R.id.user_Image);
 
                     Picasso.get().load(imagee).into(post_userImage);
-
+                    s.removeEventListener(this);
                 }
 
                 @Override
@@ -192,26 +194,24 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
 
         Post model = postsList.get(position);
         final String post_key = model.getKey();
-        DatabaseReference likes = Database.child(post_key).child("likes");
-        try {
-            likes.addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
+        final DatabaseReference likes = Database.child(post_key).child("likes");
+
+        likes.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.getValue() != null) {
                     counter = dataSnapshot.getValue(Integer.class);
                     viewHolder.setCounter(String.valueOf(counter));
+                    likes.removeEventListener(this);
                 }
+            }
 
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
 
-                }
-            });
+            }
+        });
 
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            Toast.makeText(viewHolder.view.getContext(), "This post Not available any more ):", Toast.LENGTH_SHORT).show();
-        }
 
         viewHolder.setCommentsNumber(String.valueOf(model.getCommentsNumber()));
         viewHolder.setDesc(model.getDesc());
@@ -225,7 +225,6 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
         viewHolder.view.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //Toast.makeText(MainActivity.this,post_key,Toast.LENGTH_LONG).show();
                 Intent singlePostIntent = new Intent(viewHolder.view.getContext(), PostSingleActivity.class);
                 singlePostIntent.putExtra("Post_Id", post_key);
                 singlePostIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -237,16 +236,19 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
         viewHolder.mUserImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                DatabaseReference likes = Database.child(post_key).child("uid");
+                final DatabaseReference likes = Database.child(post_key).child("uid");
                 likes.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
-                        String use = dataSnapshot.getValue(String.class);
-                        Intent Intent = new Intent(viewHolder.view.getContext(), Profile_Activity.class);
-                        Intent.putExtra("user_id", use);
-                        Intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                        viewHolder.view.getContext().startActivity(Intent);
-                        showAds();
+                        if (dataSnapshot.getValue() != null) {
+                            String use = dataSnapshot.getValue(String.class);
+                            Intent Intent = new Intent(viewHolder.view.getContext(), Profile_Activity.class);
+                            Intent.putExtra("user_id", use);
+                            Intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                            viewHolder.view.getContext().startActivity(Intent);
+                            showAds();
+                            likes.removeEventListener(this);
+                        }
                     }
 
                     @Override
@@ -259,71 +261,75 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
             }
         });
 
-        try {
-            viewHolder.mlikeBtn.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
 
-                    mProcessLike = true;
+        viewHolder.mlikeBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                isPostExist = true;
+                mProcessLike = true;
 
-                    DatabaseReference likes = Database.child(post_key).child("likes");
-                    likes.addListenerForSingleValueEvent(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(DataSnapshot dataSnapshot) {
+                DatabaseReference likes = Database.child(post_key).child("likes");
+                likes.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+
+                        if (dataSnapshot.getValue() != null) {
                             counter = dataSnapshot.getValue(Integer.class);
+                        } else {
+                            Toast.makeText(viewHolder.view.getContext(), "sorry it seem that post is no longer available", Toast.LENGTH_SHORT).show();
+                            isPostExist = false;
                         }
+                    }
 
-                        @Override
-                        public void onCancelled(DatabaseError databaseError) {
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
 
-                        }
-                    });
+                    }
+                });
 
-                    mDatabaseLike.addValueEventListener(new ValueEventListener() {
+                mDatabaseLike.addListenerForSingleValueEvent(new ValueEventListener() {
 
-                        @Override
-                        public void onDataChange(DataSnapshot dataSnapshot) {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
 
-                            if (mProcessLike) {
+                        if (mProcessLike && isPostExist) {
 
-                                if (dataSnapshot.child(post_key).hasChild(mAuth.getCurrentUser().getUid())) {
+                            if (dataSnapshot.child(post_key).hasChild(mAuth.get().getCurrentUser().getUid())) {
 
-                                    counter--;
-                                    //viewHolder.setLikesCount(counter);
-                                    Database.child(post_key).child("likes").setValue(counter);
+                                counter--;
+                                //viewHolder.setLikesCount(counter);
+                                Database.child(post_key).child("likes").setValue(counter);
 
-                                    mDatabaseLike.child(post_key).child(mAuth.getCurrentUser().getUid()).removeValue();
+                                mDatabaseLike.child(post_key).child(mAuth.get().getCurrentUser().getUid()).removeValue();
 
-                                    mProcessLike = false;
+                                mProcessLike = false;
 
-                                } else {
+                            } else {
 
-                                    counter++;
-                                    //viewHolder.setLikesCount(counter);
+                                counter++;
+                                //viewHolder.setLikesCount(counter);
 
-                                    Database.child(post_key).child("likes").setValue(counter);
+                                Database.child(post_key).child("likes").setValue(counter);
 
-                                    mDatabaseLike.child(post_key).child(mAuth.getCurrentUser().getUid()).setValue("random value");
+                                mDatabaseLike.child(post_key).child(mAuth.get().getCurrentUser().getUid()).setValue("random value");
 
-                                    mProcessLike = false;
-                                }
-                                notifyDataSetChanged();
+                                mProcessLike = false;
                             }
-
+                            notifyDataSetChanged();
+                            mDatabaseLike.removeEventListener(this);
                         }
 
-                        @Override
-                        public void onCancelled(DatabaseError databaseError) {
+                    }
 
-                        }
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
 
-                    });
-                }
-            });
-        } catch (Exception e) {
-            e.printStackTrace();
-            Toast.makeText(viewHolder.view.getContext(), "This post Not available any more ):", Toast.LENGTH_SHORT).show();
-        }
+                    }
+
+                });
+
+            }
+        });
 
     }
 
